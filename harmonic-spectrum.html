@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>I-Limit – Harmonic Spectrum</title>
+<style>
+  :root {
+    --rot: #d12b2b;
+    --blau: #1f63c4;
+    --grenz: #111111;
+    --achse: #444;
+    --grid: #e3e3e3;
+    --text: #1a1a1a;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: var(--text);
+  }
+  /* 16:9 Bühne, wird per JS in das Fenster skaliert */
+  #stage-wrap {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #ffffff;
+  }
+  #stage {
+    width: 1280px;
+    height: 720px;
+    background: #ffffff;
+    transform-origin: center center;
+    display: flex;
+    flex-direction: column;
+    padding: 28px 40px 0 40px;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  header .sub {
+    margin: 2px 0 0 0;
+    font-size: 15px;
+    color: #666;
+  }
+  #charts {
+    /* Höhe = Panelbreite × Seitenverhältnis des viewBox (520/600),
+       damit das SVG das Panel ohne Letterbox füllt */
+    height: 505px;
+    display: flex;
+    gap: 36px;
+  }
+  .panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .panel h2 {
+    text-align: center;
+    margin: 0 0 2px 0;
+    font-size: 19px;
+    font-weight: 600;
+  }
+  .panel svg { width: 100%; height: 100%; }
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 26px;
+    margin-top: 6px;
+    font-size: 14px;
+    color: #333;
+  }
+  .legend .item { display: flex; align-items: center; gap: 7px; }
+  .swatch { width: 18px; height: 12px; border-radius: 2px; }
+  .swatch.line { height: 0; border-top: 3px solid var(--grenz); width: 22px; }
+
+  /* Steuerung */
+  #controls {
+    flex: 1;
+    display: flex;
+    gap: 36px;
+    align-items: center;
+  }
+  .ctrl-cell {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+  .toggle {
+    font: 600 16px "Segoe UI", Arial, sans-serif;
+    padding: 11px 26px;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #ffffff;
+    color: #333;
+    border: 2px solid #c8c8c8;
+    transition: background-color .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;
+  }
+  .toggle:hover { border-color: #9a9a9a; }
+  .toggle.v.active {
+    background: var(--blau); border-color: var(--blau); color: #fff;
+    box-shadow: 0 2px 8px rgba(31,99,196,0.35);
+  }
+  .toggle.c.active {
+    background: var(--rot); border-color: var(--rot); color: #fff;
+    box-shadow: 0 2px 8px rgba(209,43,43,0.35);
+  }
+</style>
+</head>
+<body>
+<div id="stage-wrap">
+  <div id="stage">
+    <div id="charts">
+      <div class="panel">
+        <svg id="svgU" viewBox="0 0 600 520" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+
+      <div class="panel">
+        <svg id="svgI" viewBox="0 0 600 520" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+    </div>
+
+    <div id="controls">
+      <div class="ctrl-cell">
+        <button id="btnV" class="toggle v" aria-pressed="false">Voltage Limitation</button>
+      </div>
+      <div class="ctrl-cell">
+        <button id="btnC" class="toggle c" aria-pressed="false">Current Limitation</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===================== DATEN ===================== */
+const orders = [3,5,7,9,11,13,15,17,19,21,23,25];
+
+// Proportionalitätsfaktor zwischen Strom und Spannung
+const FAKTOR = 0.0025;
+
+// Lastströme [A] (Rohwerte) – werden auf volle Ampere aufgerundet
+const stromRoh = [0, 413.4, 206.7, 0, 165.3, 118.1, 0, 103.3, 82.7, 0, 75.1, 63.6];
+const stromWerte = stromRoh.map(v => Math.ceil(v));
+
+// Strom-Grenzwerte [A]
+const stromGrenz = [228.2931654, 228.2931654, 228.2931654, 228.2931654,
+                    104.6343675, 104.6343675, 104.6343675,
+                    95.12215226, 95.12215226, 95.12215226,
+                    47.56107613, 47.56107613];
+
+// Spannungs-Grenzwerte [%]
+const spannungGrenz = [5, 6, 5, 1.5, 3.5, 3, 0.5, 2, 1.5, 0.5, 1.5, 1.5];
+
+/* ===================== RENDERER ===================== */
+const NS = "http://www.w3.org/2000/svg";
+function el(name, attrs, text) {
+  const e = document.createElementNS(NS, name);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text != null) e.textContent = text;
+  return e;
+}
+
+function renderChart(svg, opts) {
+  const { limits, barColor, yMax, yStep, yTitle, initial } = opts;
+
+  // Plotbereich
+  const M = { l: 56, r: 18, t: 34, b: 46 };
+  const W = 600, H = 520;
+  const pw = W - M.l - M.r;
+  const ph = H - M.t - M.b;
+  const n = orders.length;
+  const slot = pw / n;
+  const barW = Math.min(24, slot * 0.55);
+  const limW = barW + 14;
+  const baseY = M.t + ph;
+
+  const y = v => M.t + ph * (1 - Math.max(0, Math.min(v, yMax)) / yMax);
+  const xCenter = i => M.l + slot * (i + 0.5);
+
+  // Gridlines + Y-Achsenbeschriftung
+  for (let v = 0; v <= yMax + 1e-9; v += yStep) {
+    const yy = y(v);
+    svg.appendChild(el("line", { x1: M.l, y1: yy, x2: W - M.r, y2: yy,
+      stroke: "var(--grid)", "stroke-width": 1 }));
+    svg.appendChild(el("text", { x: M.l - 8, y: yy + 4, "text-anchor": "end",
+      "font-size": 13, fill: "var(--achse)" }, Number(v.toFixed(2)).toString()));
+  }
+
+  // Achsen
+  svg.appendChild(el("line", { x1: M.l, y1: M.t, x2: M.l, y2: baseY,
+    stroke: "var(--achse)", "stroke-width": 1.5 }));
+  svg.appendChild(el("line", { x1: M.l, y1: baseY, x2: W - M.r, y2: baseY,
+    stroke: "var(--achse)", "stroke-width": 1.5 }));
+
+  // Y-Achsentitel
+  svg.appendChild(el("text", { x: 16, y: M.t + ph / 2, "text-anchor": "middle",
+    "font-size": 16, "font-weight": 600, fill: "var(--text)",
+    transform: "rotate(-90 16 " + (M.t + ph / 2) + ")" }, yTitle));
+
+  // Balken (animierbar) + Grenzwertlinien + Ordnungszahlen
+  const bars = [];
+  for (let i = 0; i < n; i++) {
+    const cx = xCenter(i);
+
+    const rect = el("rect", { x: cx - barW / 2, y: baseY, width: barW,
+      height: 0, fill: barColor, rx: 1.5 });
+    svg.appendChild(rect);
+    bars.push(rect);
+
+    const ly = y(limits[i]);
+    svg.appendChild(el("line", { x1: cx - limW / 2, y1: ly, x2: cx + limW / 2, y2: ly,
+      stroke: "var(--grenz)", "stroke-width": 3, "stroke-linecap": "round" }));
+
+    svg.appendChild(el("text", { x: cx, y: baseY + 20, "text-anchor": "middle",
+      "font-size": 13.5, fill: "var(--text)" }, orders[i]));
+  }
+
+  function setBar(i, v) {
+    const yy = y(v);
+    bars[i].setAttribute("y", yy);
+    bars[i].setAttribute("height", baseY - yy);
+  }
+
+  const chart = { setBar, cur: initial.slice(), raf: 0 };
+  initial.forEach((v, i) => setBar(i, v));
+  return chart;
+}
+
+/* ===================== AUSGANGSWERTE ===================== */
+const baseI = stromWerte.slice();
+const baseU = orders.map((o, i) => stromWerte[i] * FAKTOR * o);
+
+const chartU = renderChart(document.getElementById("svgU"), {
+  limits: spannungGrenz, barColor: "var(--blau)",
+  yMax: 7, yStep: 1, yTitle: "U[%]", initial: baseU
+});
+
+const chartI = renderChart(document.getElementById("svgI"), {
+  limits: stromGrenz, barColor: "var(--rot)",
+  yMax: 600, yStep: 100, yTitle: "I[A]", initial: baseI
+});
+
+/* ===================== WEICHE ÜBERGÄNGE ===================== */
+function easeInOut(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2; }
+
+function animateChart(chart, target, dur) {
+  dur = dur || 650;
+  cancelAnimationFrame(chart.raf);
+  const from = chart.cur.slice();
+  const t0 = performance.now();
+  function step(now) {
+    const t = Math.min(1, (now - t0) / dur);
+    const e = easeInOut(t);
+    for (let i = 0; i < from.length; i++)
+      chart.setBar(i, from[i] + (target[i] - from[i]) * e);
+    if (t < 1) chart.raf = requestAnimationFrame(step);
+    else chart.cur = target.slice();
+  }
+  chart.raf = requestAnimationFrame(step);
+}
+
+/* ===================== LIMITIERUNGS-LOGIK ===================== */
+let vLimit = false, cLimit = false;
+
+function recompute() {
+  const Iv = [], Uv = [];
+  for (let i = 0; i < orders.length; i++) {
+    const k = FAKTOR * orders[i];          // Proportionalitätsfaktor
+    let I = stromWerte[i];
+    if (cLimit) I = Math.min(I, stromGrenz[i]);   // Strom auf Grenzwert begrenzen
+    let U = I * k;                                  // Spannung aus Strom
+    if (vLimit) {                                   // Spannung auf Grenzwert begrenzen
+      U = Math.min(U, spannungGrenz[i]);
+      I = k > 0 ? U / k : 0;                         // Strom aus begrenzter Spannung
+    }
+    Iv.push(I); Uv.push(U);
+  }
+  animateChart(chartI, Iv);
+  animateChart(chartU, Uv);
+}
+
+/* ===================== SCHALTFLÄCHEN ===================== */
+const btnV = document.getElementById("btnV");
+const btnC = document.getElementById("btnC");
+
+btnV.addEventListener("click", () => {
+  vLimit = !vLimit;
+  btnV.classList.toggle("active", vLimit);
+  btnV.setAttribute("aria-pressed", vLimit);
+  recompute();
+});
+
+btnC.addEventListener("click", () => {
+  cLimit = !cLimit;
+  btnC.classList.toggle("active", cLimit);
+  btnC.setAttribute("aria-pressed", cLimit);
+  recompute();
+});
+
+/* ===================== 16:9 auf Fenster skalieren ===================== */
+function fitStage() {
+  const stage = document.getElementById("stage");
+  const s = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+  stage.style.transform = "scale(" + s + ")";
+}
+window.addEventListener("resize", fitStage);
+document.addEventListener("fullscreenchange", fitStage);
+fitStage();
+
+/* ===================== VOLLBILD (Taste F) ===================== */
+document.addEventListener("keydown", (e) => {
+  if (e.key === "f" || e.key === "F") {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen();
+    }
+  }
+});
+</script>
+</body>
+</html>
