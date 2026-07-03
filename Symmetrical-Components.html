@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Symmetrical Components</title>
+<style>
+  :root{
+    --c1:#0C3A6E;
+    --c2:#246CB0;
+    --c3:#038DCD;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; margin:0; }
+  body{
+    background:#e4e6e9;
+    font-family:"Segoe UI","Segoe UI Variable",Tahoma,sans-serif;
+    color:#000;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  /* white 16:9 canvas area */
+  #stage{
+    background:#fff;
+    width:min(100vw, calc(100vh * 16 / 9));
+    aspect-ratio:16/9;
+    display:flex; flex-direction:column;
+    padding:10px 16px 12px;
+    box-shadow:0 2px 16px rgba(0,0,0,.25);
+  }
+
+  /* shared column grid: row label | phasor | sine | input */
+  .cols{
+    display:grid;
+    grid-template-columns:26px minmax(0,1.05fr) minmax(0,1.9fr) 265px;
+    gap:0 14px;
+  }
+
+  #topbar{ display:flex; align-items:center; gap:18px; padding:0 2px 4px; }
+  #topbar h1{ font-size:17px; font-weight:600; margin:0; }
+  .legend{ display:flex; gap:14px; font-size:12px; }
+  .legend span::before{
+    content:""; display:inline-block; width:18px; height:4px;
+    border-radius:2px; margin-right:5px; vertical-align:middle;
+  }
+  .legend .l1::before{ background:var(--c1); }
+  .legend .l2::before{ background:var(--c2); }
+  .legend .l3::before{ background:var(--c3); }
+
+  #presets{ margin-left:auto; display:flex; gap:8px; }
+  #presets button{
+    font:inherit; font-size:12px; color:#000;
+    padding:3px 14px; border:1px solid #b9bec5; border-radius:4px;
+    background:#f4f5f7; cursor:pointer;
+  }
+  #presets button:hover{ background:#e8eaee; }
+  #presets button:active{ background:#dde0e5; }
+
+  header.cols{ padding-bottom:2px; }
+  .colhead{ font-size:12px; font-weight:600; text-align:center; }
+
+  .row{
+    flex:1 1 0; min-height:0;
+    border-top:1px solid #e2e5e9;
+    padding:4px 0;
+  }
+  .rlabel{
+    writing-mode:vertical-rl; transform:rotate(180deg);
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:600; white-space:nowrap;
+  }
+  .cell{ position:relative; min-width:0; min-height:0; }
+  .cell canvas{ position:absolute; inset:0; width:100%; height:100%; }
+
+  /* input column */
+  .input{ display:flex; flex-direction:column; justify-content:center; gap:8px; font-size:12px; }
+  .ctlrow{ display:grid; grid-template-columns:78px 62px 1fr; align-items:center; gap:8px; }
+  .ctlrow input[type=number]{
+    width:100%; font:inherit; color:#000; padding:2px 4px;
+    border:1px solid #b9bec5; border-radius:4px; background:#fff;
+  }
+  .ctlrow input[type=range]{ width:100%; accent-color:var(--c2); margin:0; }
+
+  #sumOut{ display:flex; flex-direction:column; justify-content:center; gap:5px; font-size:12.5px; }
+  #sumOut .h{ font-weight:600; color:#000; margin-bottom:2px; }
+  #sumOut .v{ font-variant-numeric:tabular-nums; }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <div id="topbar">
+    <h1>Symmetrical Components of a Three-Phase System</h1>
+    <div class="legend">
+      <span class="l1">Phase 1</span>
+      <span class="l2">Phase 2</span>
+      <span class="l3">Phase 3</span>
+    </div>
+    <div id="presets">
+      <button data-preset="sym">Symmetrical</button>
+      <button data-preset="two">Two Phase</button>
+      <button data-preset="one">One Phase</button>
+    </div>
+  </div>
+
+  <header class="cols">
+    <div></div>
+    <div class="colhead">Phasor Diagram</div>
+    <div class="colhead">Sine Waves</div>
+    <div class="colhead">Input</div>
+  </header>
+
+  <!-- Positive sequence -->
+  <div class="row cols">
+    <div class="rlabel">Positive Sequence</div>
+    <div class="cell"><canvas data-row="pos" data-kind="phasor"></canvas></div>
+    <div class="cell"><canvas data-row="pos" data-kind="sine"></canvas></div>
+    <div class="input">
+      <div class="ctlrow">
+        <span>Amplitude û</span>
+        <input type="number" min="0" max="100" step="1" value="100" data-sys="pos" data-p="A">
+        <input type="range"  min="0" max="100" step="1" value="100" data-sys="pos" data-p="A">
+      </div>
+      <div class="ctlrow">
+        <span>Phase φ in °</span>
+        <input type="number" min="-180" max="180" step="1" value="0" data-sys="pos" data-p="phi">
+        <input type="range"  min="-180" max="180" step="1" value="0" data-sys="pos" data-p="phi">
+      </div>
+    </div>
+  </div>
+
+  <!-- Negative sequence -->
+  <div class="row cols">
+    <div class="rlabel">Negative Sequence</div>
+    <div class="cell"><canvas data-row="neg" data-kind="phasor"></canvas></div>
+    <div class="cell"><canvas data-row="neg" data-kind="sine"></canvas></div>
+    <div class="input">
+      <div class="ctlrow">
+        <span>Amplitude û</span>
+        <input type="number" min="0" max="100" step="1" value="0" data-sys="neg" data-p="A">
+        <input type="range"  min="0" max="100" step="1" value="0" data-sys="neg" data-p="A">
+      </div>
+      <div class="ctlrow">
+        <span>Phase φ in °</span>
+        <input type="number" min="-180" max="180" step="1" value="0" data-sys="neg" data-p="phi">
+        <input type="range"  min="-180" max="180" step="1" value="0" data-sys="neg" data-p="phi">
+      </div>
+    </div>
+  </div>
+
+  <!-- Zero sequence -->
+  <div class="row cols">
+    <div class="rlabel">Zero Sequence</div>
+    <div class="cell"><canvas data-row="zero" data-kind="phasor"></canvas></div>
+    <div class="cell"><canvas data-row="zero" data-kind="sine"></canvas></div>
+    <div class="input">
+      <div class="ctlrow">
+        <span>Amplitude û</span>
+        <input type="number" min="0" max="100" step="1" value="0" data-sys="zero" data-p="A">
+        <input type="range"  min="0" max="100" step="1" value="0" data-sys="zero" data-p="A">
+      </div>
+      <div class="ctlrow">
+        <span>Phase φ in °</span>
+        <input type="number" min="-180" max="180" step="1" value="0" data-sys="zero" data-p="phi">
+        <input type="range"  min="-180" max="180" step="1" value="0" data-sys="zero" data-p="phi">
+      </div>
+    </div>
+  </div>
+
+  <!-- Sum -->
+  <div class="row cols">
+    <div class="rlabel">Sum</div>
+    <div class="cell"><canvas data-row="sum" data-kind="phasor"></canvas></div>
+    <div class="cell"><canvas data-row="sum" data-kind="sine"></canvas></div>
+    <div id="sumOut"></div>
+  </div>
+
+</div>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------ */
+/*  Model                                                              */
+/* ------------------------------------------------------------------ */
+
+const COL = ['#0C3A6E', '#246CB0', '#038DCD'];   // phase 1, 2, 3
+const D2R = Math.PI / 180;
+
+// Fixed axis scale for the sequence rows: amplitude 100 = circle radius.
+// The sum row uses at least this scale and only grows beyond it.
+const FIXED_SCALE = 100;
+
+// amplitude û and phase angle φ (degrees) per sequence system
+const state = {
+  pos:  { A: 100, phi: 0 },   // positive sequence
+  neg:  { A: 0,   phi: 0 },   // negative sequence
+  zero: { A: 0,   phi: 0 }    // zero sequence
+};
+
+const PRESETS = {
+  sym: { pos: { A: 100, phi: 0 }, neg: { A: 0,   phi: 0   }, zero: { A: 0,   phi: 0 } },
+  two: { pos: { A: 100, phi: 0 }, neg: { A: 100, phi: 180 }, zero: { A: 0,   phi: 0 } },
+  one: { pos: { A: 100, phi: 0 }, neg: { A: 100, phi: 0   }, zero: { A: 100, phi: 0 } }
+};
+
+// phase displacement within each system:
+//   positive sequence: 1 -> 2 -> 3 at -120° each (clockwise rotating field)
+//   negative sequence: reversed phase order (+120°)
+//   zero sequence:     all in phase
+const SEQ = {
+  pos:  [0, -120,  120],
+  neg:  [0,  120, -120],
+  zero: [0,    0,    0]
+};
+
+function phasorsOf(sys) {
+  const { A, phi } = state[sys];
+  return SEQ[sys].map(off => {
+    const a = (phi + off) * D2R;
+    return { mag: A, ang: a, re: A * Math.cos(a), im: A * Math.sin(a) };
+  });
+}
+
+function sumPhasors() {
+  const p = phasorsOf('pos'), n = phasorsOf('neg'), z = phasorsOf('zero');
+  return [0, 1, 2].map(k => {
+    const re = p[k].re + n[k].re + z[k].re;
+    const im = p[k].im + n[k].im + z[k].im;
+    return { re, im, mag: Math.hypot(re, im), ang: Math.atan2(im, re) };
+  });
+}
+
+function angDiff(a, b) {
+  let d = (a - b) % (2 * Math.PI);
+  if (d >  Math.PI) d -= 2 * Math.PI;
+  if (d < -Math.PI) d += 2 * Math.PI;
+  return d;
+}
+
+function normDeg(d) {
+  let x = ((d + 180) % 360 + 360) % 360 - 180;
+  return (x === -180) ? 180 : x;
+}
+
+// Detect coinciding phasors/curves (e.g. zero sequence) so that all
+// three colours stay visible.
+function overlapCounts(ph, scale) {
+  return ph.map((p, i) => {
+    let n = 0;
+    for (let j = 0; j < i; j++) {
+      if (Math.abs(angDiff(p.ang, ph[j].ang)) < 0.015 &&
+          Math.abs(p.mag - ph[j].mag) <= scale * 0.01) n++;
+    }
+    return n;
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/*  Drawing                                                            */
+/* ------------------------------------------------------------------ */
+
+function fit(c) {
+  const r = c.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const w = Math.max(10, Math.round(r.width));
+  const h = Math.max(10, Math.round(r.height));
+  if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) {
+    c.width = Math.round(w * dpr);
+    c.height = Math.round(h * dpr);
+  }
+  const ctx = c.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, w, h };
+}
+
+function arrow(ctx, x0, y0, x1, y1, color, lw) {
+  const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy);
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = lw;
+  if (len < 2) {                       // zero-length phasor -> dot
+    ctx.beginPath(); ctx.arc(x1, y1, 2.5, 0, 2 * Math.PI); ctx.fill();
+    return;
+  }
+  const hl = Math.min(11, len * 0.45), hw = hl * 0.5;
+  const ux = dx / len, uy = dy / len;
+  const bx = x1 - ux * hl, by = y1 - uy * hl;
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(bx, by); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(bx - uy * hw, by + ux * hw);
+  ctx.lineTo(bx + uy * hw, by - ux * hw);
+  ctx.closePath(); ctx.fill();
+}
+
+function drawPhasor(ctx, w, h, ph, scale) {
+  ctx.clearRect(0, 0, w, h);
+  const cx = w / 2, cy = h / 2;
+  const R = Math.min(w, h) / 2 - 16;
+
+  // axes and reference circle (circle radius = scale)
+  ctx.strokeStyle = '#dde1e6'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(cx - R - 10, cy); ctx.lineTo(cx + R + 10, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx, cy - R - 10); ctx.lineTo(cx, cy + R + 10); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI); ctx.stroke();
+
+  const off = overlapCounts(ph, scale);
+  ctx.font = "600 11px 'Segoe UI', sans-serif";
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+
+  ph.forEach((p, i) => {
+    const L = p.mag / scale * R;
+    const ux = Math.cos(p.ang), uy = -Math.sin(p.ang);   // screen y points down
+    const o = off[i] * 5;                                // offset coinciding phasors
+    const px = -uy * o, py = ux * o;
+    arrow(ctx, cx + px, cy + py, cx + px + ux * L, cy + py + uy * L, COL[i], 2.2);
+    if (L > 4) {
+      ctx.fillStyle = COL[i];
+      ctx.fillText(String(i + 1), cx + px + ux * (L + 10), cy + py + uy * (L + 10));
+    }
+  });
+}
+
+function drawSine(ctx, w, h, ph, scale) {
+  ctx.clearRect(0, 0, w, h);
+  const padL = 8, padR = 8, padT = 8, padB = 16;
+  const W = w - padL - padR;
+  const y0 = padT + (h - padT - padB) / 2;
+  const amp = (h - padT - padB) / 2 - 2;
+  const k = amp / (scale * 1.05);
+  const TOTAL = 720;                                     // two periods in degrees
+
+  // vertical grid every 90°
+  ctx.lineWidth = 1;
+  for (let g = 0; g <= TOTAL; g += 90) {
+    const x = padL + g / TOTAL * W;
+    ctx.strokeStyle = (g % 360 === 0) ? '#ccd1d7' : '#e7eaee';
+    ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, h - padB); ctx.stroke();
+  }
+
+  // time axis
+  ctx.strokeStyle = '#000'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(padL, y0); ctx.lineTo(padL + W, y0); ctx.stroke();
+
+  // labels
+  ctx.fillStyle = '#000';
+  ctx.font = "10px 'Segoe UI', sans-serif";
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (let g = 180; g < TOTAL; g += 180) {
+    ctx.fillText(g + '°', padL + g / TOTAL * W, h - padB + 3);
+  }
+  ctx.textAlign = 'right';
+  ctx.fillText('ωt', padL + W, h - padB + 3);
+
+  // curves; dashed when coinciding so every phase stays visible
+  const off = overlapCounts(ph, scale);
+  const DASH = [[], [12, 7], [3, 8]];
+  ph.forEach((p, i) => {
+    ctx.strokeStyle = COL[i];
+    ctx.lineWidth = 2.2;
+    ctx.setLineDash(DASH[Math.min(off[i], 2)]);
+    ctx.beginPath();
+    for (let x = 0; x <= W; x++) {
+      const th = x / W * TOTAL * D2R;
+      const y = y0 - k * p.mag * Math.sin(th + p.ang);
+      (x === 0) ? ctx.moveTo(padL + x, y) : ctx.lineTo(padL + x, y);
+    }
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Update                                                             */
+/* ------------------------------------------------------------------ */
+
+const canvases = Array.from(document.querySelectorAll('canvas'));
+const sumOut = document.getElementById('sumOut');
+
+function redrawAll() {
+  const rows = {
+    pos:  phasorsOf('pos'),
+    neg:  phasorsOf('neg'),
+    zero: phasorsOf('zero'),
+    sum:  sumPhasors()
+  };
+
+  // sequence rows are fixed at 100; the sum row grows beyond 100 if needed
+  let sumScale = FIXED_SCALE;
+  rows.sum.forEach(p => { sumScale = Math.max(sumScale, p.mag); });
+
+  canvases.forEach(c => {
+    const { ctx, w, h } = fit(c);
+    const ph = rows[c.dataset.row];
+    const scale = (c.dataset.row === 'sum') ? sumScale : FIXED_SCALE;
+    if (c.dataset.kind === 'phasor') drawPhasor(ctx, w, h, ph, scale);
+    else drawSine(ctx, w, h, ph, scale);
+  });
+
+  sumOut.innerHTML =
+    '<div class="h">Resulting Phasors</div>' +
+    rows.sum.map((p, i) =>
+      `<div class="v" style="color:${COL[i]}">u<sub>${i + 1}</sub>:&nbsp; û = ` +
+      `${p.mag.toFixed(1)},&nbsp; φ = ${normDeg(p.ang / D2R).toFixed(1)}°</div>`
+    ).join('');
+}
+
+function syncInputs() {
+  document.querySelectorAll('input[data-sys]').forEach(inp => {
+    inp.value = state[inp.dataset.sys][inp.dataset.p];
+  });
+}
+
+document.querySelectorAll('input[data-sys]').forEach(inp => {
+  inp.addEventListener('input', () => {
+    let v = parseFloat(inp.value);
+    if (!isFinite(v)) return;
+    const min = parseFloat(inp.min), max = parseFloat(inp.max);
+    v = Math.min(max, Math.max(min, v));
+    state[inp.dataset.sys][inp.dataset.p] = v;
+    document.querySelectorAll(
+      `input[data-sys="${inp.dataset.sys}"][data-p="${inp.dataset.p}"]`
+    ).forEach(o => { if (o !== inp) o.value = v; });
+    redrawAll();
+  });
+});
+
+document.querySelectorAll('#presets button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const preset = PRESETS[btn.dataset.preset];
+    for (const sys of ['pos', 'neg', 'zero']) {
+      state[sys].A   = preset[sys].A;
+      state[sys].phi = preset[sys].phi;
+    }
+    syncInputs();
+    redrawAll();
+  });
+});
+
+new ResizeObserver(() => redrawAll())
+  .observe(document.getElementById('stage'));
+
+redrawAll();
+</script>
+</body>
+</html>
