@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>swing-equation</title>
+<style>
+  :root {
+    --text: #000000;
+    --text-soft: #4a4f55;
+    --neutral: #46648a;
+    --neutral-dark: #2c405c;
+    --warm: #9c6b3f;
+    --alert: #a25d5d;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: "Segoe UI", "Segoe UI Variable", system-ui, sans-serif;
+    color: var(--text);
+    background: #eef0f2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2vh 2vw;
+  }
+
+  .stage {
+    background: #ffffff;
+    width: min(1500px, 96vw);
+    aspect-ratio: 16 / 9;
+    border-radius: 10px;
+    box-shadow: 0 2px 14px rgba(30, 40, 55, 0.10);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .scene {
+    width: 94%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(4px, 1vh, 14px);
+  }
+
+  .mainviz { width: min(1000px, 100%); }
+  .mainviz svg { width: 100%; height: auto; display: block; }
+
+  .charts {
+    width: min(1060px, 100%);
+    display: flex;
+    gap: clamp(12px, 2vw, 30px);
+  }
+  .chartbox { flex: 1 1 0; min-width: 0; }
+  .caption {
+    font-size: 0.8rem;
+    color: var(--text-soft);
+    margin: 0 0 2px 4px;
+  }
+  canvas {
+    width: 100%;
+    height: 140px;
+    display: block;
+  }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: clamp(12px, 2vw, 28px);
+  }
+
+  button {
+    font: inherit;
+    font-size: 0.9rem;
+    padding: 7px 18px;
+    border: 1px solid var(--neutral);
+    color: var(--neutral-dark);
+    background: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  button:hover { background: #f0f4f9; }
+
+  .ctrl {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.88rem;
+  }
+  .ctrl label { font-weight: 600; }
+  .ctrl .val {
+    width: 46px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* sliders: neutral track, colored thumb + fill left of it (as on page 2) */
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: clamp(110px, 12vw, 190px);
+    height: 22px;
+    background: transparent;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 3px;
+    background: #dfe3e8;
+  }
+  /* signed slider: fill grows from the centre (zero) towards the thumb */
+  input.warm::-webkit-slider-runnable-track {
+    background: linear-gradient(to right,
+      #dfe3e8 var(--a, 50%), var(--warm) var(--a, 50%),
+      var(--warm) var(--b, 50%), #dfe3e8 var(--b, 50%));
+  }
+  input.blue::-webkit-slider-runnable-track {
+    background: linear-gradient(to right, var(--neutral) var(--fill, 0%), #dfe3e8 var(--fill, 0%));
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: none;
+    margin-top: -6px;
+  }
+  input.warm::-webkit-slider-thumb { background: var(--warm); }
+  input.blue::-webkit-slider-thumb { background: var(--neutral); }
+  input[type="range"]::-moz-range-track { height: 6px; border-radius: 3px; background: #dfe3e8; }
+  input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; border: none; }
+  input.warm::-moz-range-thumb { background: var(--warm); }
+  input.blue::-moz-range-thumb { background: var(--neutral); }
+  input.blue::-moz-range-progress { height: 6px; border-radius: 3px; background: var(--neutral); }
+  input.warm::-moz-range-track {
+    background: linear-gradient(to right,
+      #dfe3e8 var(--a, 50%), var(--warm) var(--a, 50%),
+      var(--warm) var(--b, 50%), #dfe3e8 var(--b, 50%));
+  }
+
+  svg text { font-family: "Segoe UI", system-ui, sans-serif; }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="scene">
+
+    <!-- main scene: two flywheels coupled by a torsion spring (perspective view) -->
+    <div class="mainviz">
+      <svg viewBox="230 160 1140 580" aria-label="Two coupled generators">
+        <defs>
+          <!-- spoke geometry only; each use sets its own colours -->
+          <path id="spokeShape" d="M -14 -54 L -8 -236 L 8 -236 L 14 -54 Z"/>
+
+          <!-- rotating part of a wheel: 7 steel spokes, 1 dark marker spoke, hub -->
+          <g id="rotorDef" stroke="#4d5a68">
+            <g fill="#bac4cd" stroke-width="3.5">
+              <use href="#spokeShape" transform="rotate(45)"/>
+              <use href="#spokeShape" transform="rotate(90)"/>
+              <use href="#spokeShape" transform="rotate(135)"/>
+              <use href="#spokeShape" transform="rotate(180)"/>
+              <use href="#spokeShape" transform="rotate(225)"/>
+              <use href="#spokeShape" transform="rotate(270)"/>
+              <use href="#spokeShape" transform="rotate(315)"/>
+            </g>
+            <!-- marker spoke: makes the angle difference between the wheels visible -->
+            <use href="#spokeShape" fill="var(--neutral-dark)" stroke-width="3.5"/>
+            <circle r="62" fill="#cdd5dd" stroke-width="3.5"/>
+            <g fill="#8d99a7" stroke-width="2">
+              <circle cx="40" cy="0" r="8"/>
+              <circle cx="20" cy="34.6" r="8"/>
+              <circle cx="-20" cy="34.6" r="8"/>
+              <circle cx="-40" cy="0" r="8"/>
+              <circle cx="-20" cy="-34.6" r="8"/>
+              <circle cx="20" cy="-34.6" r="8"/>
+            </g>
+            <circle r="18" fill="#6a7684" stroke-width="3"/>
+          </g>
+
+          <!-- rim side face (depth of the wheel, on the left) -->
+          <path id="rimSide" d="M -72 -280 A 280 280 0 0 0 -72 280 L 0 280 A 280 280 0 0 1 0 -280 Z"
+                fill="#97a3b0" stroke="#4d5a68" stroke-width="4"/>
+          <!-- rim front face (ring) -->
+          <path id="rimFace" fill-rule="evenodd"
+                d="M 0 -280 A 280 280 0 1 1 0 280 A 280 280 0 1 1 0 -280 Z
+                   M 0 -232 A 232 232 0 1 0 0 232 A 232 232 0 1 0 0 -232 Z"
+                fill="#c6cdd5" stroke="#4d5a68" stroke-width="4"/>
+        </defs>
+
+        <!-- outer shaft ends: the axis recedes behind the wheels -->
+        <rect x="330" y="439" width="170" height="22" rx="8" fill="#9aa5b1" stroke="#4d5a68" stroke-width="3"/>
+        <rect x="1100" y="439" width="170" height="22" rx="8" fill="#9aa5b1" stroke="#4d5a68" stroke-width="3"/>
+
+        <!-- flywheel A: rotor spins inside a squashed plane, so rotate() stays perspective-correct -->
+        <g transform="translate(505,450) scale(0.36,1)">
+          <use href="#rimSide"/>
+          <g id="rotor1"><use href="#rotorDef"/></g>
+          <use href="#rimFace"/>
+        </g>
+
+        <!-- flywheel B: rim depth mirrored -->
+        <g transform="translate(1095,450) scale(0.36,1)">
+          <use href="#rimSide" transform="scale(-1,1)"/>
+          <g id="rotor2"><use href="#rotorDef"/></g>
+          <use href="#rimFace"/>
+        </g>
+
+        <!-- inner shaft: emerges at the front hub centre, so it sits above the wheels -->
+        <rect x="505" y="437" width="185" height="26" rx="8" fill="#aab5c1" stroke="#4d5a68" stroke-width="3.5"/>
+        <rect x="910" y="437" width="185" height="26" rx="8" fill="#aab5c1" stroke="#4d5a68" stroke-width="3.5"/>
+
+        <!-- couplings and torsion spring (helix redrawn from JS as delta twists it) -->
+        <rect x="648" y="424" width="30" height="52" rx="5" fill="#8d99a7" stroke="#4d5a68" stroke-width="3.5"/>
+        <rect x="922" y="424" width="30" height="52" rx="5" fill="#8d99a7" stroke="#4d5a68" stroke-width="3.5"/>
+        <g transform="translate(0,450)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <path id="springBack" stroke="#8ba1bc" stroke-width="5.5" d=""/>
+          <path id="springFront" stroke="#4c6f9a" stroke-width="6.5" d=""/>
+        </g>
+
+        <!-- sync-loss message -->
+        <text id="lossText" x="800" y="752" text-anchor="middle" font-size="34" font-weight="600"
+              fill="var(--alert)" visibility="hidden">Generators lost synchronization</text>
+      </svg>
+    </div>
+
+    <!-- charts -->
+    <div class="charts">
+      <div class="chartbox">
+        <p class="caption">Generator voltage sin&nbsp;&theta;(t)&nbsp;&nbsp;<span style="color:#2c405c;font-weight:600">A</span>&nbsp;<span style="color:#8fa3b8;font-weight:600">B</span></p>
+        <canvas id="waveChart"></canvas>
+      </div>
+      <div class="chartbox">
+        <p class="caption">Rotor angle difference &delta;(t)</p>
+        <canvas id="deltaChart"></canvas>
+      </div>
+      <div class="chartbox">
+        <p class="caption">Potential energy U(&delta;)</p>
+        <canvas id="wellChart"></canvas>
+      </div>
+    </div>
+
+    <!-- controls -->
+    <div class="controls">
+      <div class="ctrl">
+        <label for="distSlider" style="color:var(--warm)">Load</label>
+        <input type="range" class="warm" id="distSlider" min="-100" max="100" step="1" value="0">
+        <span class="val" id="distVal" style="color:var(--warm)">0&nbsp;%</span>
+      </div>
+      <div class="ctrl">
+        <label for="dampSlider" style="color:var(--neutral-dark)">Damping</label>
+        <input type="range" class="blue" id="dampSlider" min="0" max="100" step="1" value="12">
+        <span class="val" id="dampVal">12&nbsp;%</span>
+      </div>
+      <div class="ctrl">
+        <label for="inertSlider" style="color:var(--neutral-dark)">Inertia</label>
+        <input type="range" class="blue" id="inertSlider" min="0" max="100" step="1" value="25">
+        <span class="val" id="inertVal">25&nbsp;%</span>
+      </div>
+      <button id="resetBtn" type="button">Reset</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------------- model parameters ---------------- */
+
+  var P_MAX = 3.0;        // p.u., coupling strength over the line (as in page 2)
+  var DT = 0.002;         // fixed RK4 step, 2 ms
+  var WINDOW = 20;        // s, rolling window of the delta chart
+
+  var J = 0.5;            // inertia (both machines), from slider
+  var D = 0.26;           // damping, from slider
+  var distP = 0;          // extra mechanical power on machine A, from slider (signed)
+
+  /* state: [thetaA, omegaA, thetaB, omegaB]  (angles rad, speeds rad/s, deviations) */
+  var state = [0, 0, 0, 0];
+  var simTime = 0;
+  var lost = false;
+  var history = [];       // {t, d} with d = delta in degrees
+  var histCount = 0;
+  var waveHist = [];      // {t, a, b}: vertical marker positions = sin traces
+
+  /* the disturbance shifts power from B to A (A gets +PmA, B gets -PmA):
+     the total power fed into the system is always zero, so the common
+     frequency cannot drift away - only the machines swing against each other */
+  function deriv(s, PmA) {
+    var d = s[0] - s[2];
+    var Pe = P_MAX * Math.sin(d);
+    return [ s[1],
+             (PmA - Pe - D * s[1]) / J,
+             s[3],
+             (-PmA + Pe - D * s[3]) / J ];
+  }
+
+  function rk4Step(s, PmA) {
+    var k1 = deriv(s, PmA);
+    var s2 = [s[0] + k1[0]*DT/2, s[1] + k1[1]*DT/2, s[2] + k1[2]*DT/2, s[3] + k1[3]*DT/2];
+    var k2 = deriv(s2, PmA);
+    var s3 = [s[0] + k2[0]*DT/2, s[1] + k2[1]*DT/2, s[2] + k2[2]*DT/2, s[3] + k2[3]*DT/2];
+    var k3 = deriv(s3, PmA);
+    var s4 = [s[0] + k3[0]*DT, s[1] + k3[1]*DT, s[2] + k3[2]*DT, s[3] + k3[3]*DT];
+    var k4 = deriv(s4, PmA);
+    return [
+      s[0] + DT/6 * (k1[0] + 2*k2[0] + 2*k3[0] + k4[0]),
+      s[1] + DT/6 * (k1[1] + 2*k2[1] + 2*k3[1] + k4[1]),
+      s[2] + DT/6 * (k1[2] + 2*k2[2] + 2*k3[2] + k4[2]),
+      s[3] + DT/6 * (k1[3] + 2*k2[3] + 2*k3[3] + k4[3])
+    ];
+  }
+
+  function advance(realDt) {
+    if (lost) return;                              // simulation halts after sync loss
+    var span = Math.min(realDt, 0.12);
+    var steps = Math.max(1, Math.round(span / DT));
+    for (var i = 0; i < steps; i++) {
+      state = rk4Step(state, distP);
+      simTime += DT;
+      var d = state[0] - state[2];
+      if (++histCount % 5 === 0) {                 // sample every 10 ms
+        history.push({ t: simTime, d: d * 180 / Math.PI });
+      }
+      if (!lost && Math.abs(d) > Math.PI) {
+        lost = true;                               // freeze at the moment of sync loss
+        break;
+      }
+    }
+    while (history.length && history[0].t < simTime - WINDOW) history.shift();
+  }
+
+  function deltaDeg() { return (state[0] - state[2]) * 180 / Math.PI; }
+
+  /* ---------------- controls ---------------- */
+
+  var distSlider  = document.getElementById("distSlider");
+  var dampSlider  = document.getElementById("dampSlider");
+  var inertSlider = document.getElementById("inertSlider");
+  var distVal  = document.getElementById("distVal");
+  var dampVal  = document.getElementById("dampVal");
+  var inertVal = document.getElementById("inertVal");
+
+  function readSliders() {
+    var pd = parseInt(distSlider.value, 10);
+    var pD = parseInt(dampSlider.value, 10);
+    var pJ = parseInt(inertSlider.value, 10);
+    distP = pd / 100 * 2;            // ±2 p.u. shifted from B to A; even a sudden
+                                     // full step keeps synchronism (limit ~2.2 p.u.)
+    J = Math.max(pJ / 100 * 2, 0.01);          // 0 … 2; 0 % = practically massless
+    var dCrit = 2 * Math.sqrt(2 * P_MAX * J);  // aperiodic limit (linearized at delta = 0)
+    D = pD / 100 * dCrit;                      // 0 … critical damping
+    distVal.innerHTML  = (pd > 0 ? "+" : "") + pd + "&nbsp;%";
+    dampVal.innerHTML  = pD + "&nbsp;%";
+    inertVal.innerHTML = pJ + "&nbsp;%";
+    var pos = (pd + 100) / 2;        // slider position 0 … 100 %
+    distSlider.style.setProperty("--a", Math.min(50, pos) + "%");
+    distSlider.style.setProperty("--b", Math.max(50, pos) + "%");
+    dampSlider.style.setProperty("--fill", pD + "%");
+    inertSlider.style.setProperty("--fill", pJ + "%");
+  }
+  distSlider.addEventListener("input", readSliders);
+  dampSlider.addEventListener("input", readSliders);
+  inertSlider.addEventListener("input", readSliders);
+
+  function doReset() {
+    state = [0, 0, 0, 0];
+    simTime = 0;
+    lost = false;
+    history = [];
+    histCount = 0;
+    waveHist = [];
+    distSlider.value = "0";
+    readSliders();
+  }
+
+  document.getElementById("resetBtn").addEventListener("click", doReset);
+
+  /* debug/testing hook */
+  window.__sim = {
+    advance: advance,
+    reset: doReset,
+    get: function () {
+      return { t: simTime, d: deltaDeg(), wA: state[1], wB: state[3], lost: lost, J: J, D: D, distP: distP };
+    }
+  };
+
+  /* ---------------- main scene rendering ---------------- */
+
+  var rotor1 = document.getElementById("rotor1");
+  var rotor2 = document.getElementById("rotor2");
+  var springBack  = document.getElementById("springBack");
+  var springFront = document.getElementById("springFront");
+  var lossText  = document.getElementById("lossText");
+
+  /* visual wheel rotation: both wheels spin with a common base speed derived
+     from the average frequency (doubles per +1 Hz, halves per -1 Hz, never
+     reverses); the true rotor angle difference delta is superimposed as a
+     ±delta/2 offset, so aligned markings mean "no power flow" */
+  var visCommon = 0;
+
+  function freqA() { return 50 + state[1] / (2 * Math.PI); }
+  function freqB() { return 50 + state[3] / (2 * Math.PI); }
+
+  /* spring strand colours: steel blue -> warm as tension grows */
+  var SPR_FRONT  = [76, 111, 154];    // #4c6f9a
+  var SPR_BACK   = [139, 161, 188];   // #8ba1bc
+  var WARM_FRONT = [156, 107, 63];    // --warm
+  var WARM_BACK  = [201, 168, 134];
+
+  function mixRgb(a, b, t) {
+    return "rgb(" + Math.round(a[0] + (b[0] - a[0]) * t) + "," +
+                    Math.round(a[1] + (b[1] - a[1]) * t) + "," +
+                    Math.round(a[2] + (b[2] - a[2]) * t) + ")";
+  }
+
+  /* helix spring between the couplings (x = 678 ... 922, y relative to the
+     shaft axis): drawn as a projected helix in two strands so the windings
+     overlap correctly. "lead" is the straight wire length at both ends -
+     a larger lead squeezes the coil together, a smaller one pulls it apart */
+  var SPR_X1 = 690, SPR_X2 = 910;   // exactly the ends of the two shaft stubs
+
+  function springPaths(lead, R) {
+    var N = 8, e = 11;
+    var T = N * 2 * Math.PI, stp = Math.PI / 12;
+    var P = (SPR_X2 - SPR_X1 - 2 * lead) / T;
+    var C = SPR_X1 + lead + P * Math.PI / 2 + e;
+    function fx(t) { return (C + P * t + e * Math.sin(t)).toFixed(1); }
+    function fy(t) { return (R * Math.cos(t)).toFixed(1); }
+    var n = Math.round(T / stp);
+    var back = "M " + SPR_X1 + " 0 L " + fx(-Math.PI / 2) + " " + fy(-Math.PI / 2);
+    var front = "", last = "back";
+    for (var i = 1; i <= n; i++) {
+      var t0 = -Math.PI / 2 + (i - 1) * stp, t1 = t0 + stp;
+      var layer = Math.sin((t0 + t1) / 2) > 0 ? "front" : "back";
+      var seg = " L " + fx(t1) + " " + fy(t1);
+      if (layer !== last) {
+        var m = " M " + fx(t0) + " " + fy(t0);
+        if (layer === "front") { front += m; } else { back += m; }
+      }
+      if (layer === "front") { front += seg; } else { back += seg; }
+      last = layer;
+    }
+    back += " L " + SPR_X2 + " 0";
+    return { back: back, front: front };
+  }
+
+  function renderScene() {
+    var dDeg = deltaDeg();
+
+    // wheels: common rotation plus the true angle difference split between them
+    // (the rotors sit inside a scale(0.36,1) group, so a plain rotate() stays
+    // perspective-correct). The perspective shows opposite faces of the two
+    // wheels - we look at the right side of wheel A but the left side of
+    // wheel B - so the same physical rotation must appear mirrored on screen:
+    // rotor B gets the negated angle
+    rotor1.setAttribute("transform", "rotate(" + (visCommon + dDeg / 2).toFixed(2) + ")");
+    rotor2.setAttribute("transform", "rotate(" + (dDeg / 2 - visCommon).toFixed(2) + ")");
+
+    // spring: winds tighter / opens up with delta (coil bunches and bulges when
+    // compressed, lengthens and slims when stretched), colour shifts with tension
+    var tw = Math.tanh(dDeg / 90);
+    var lead = 12 + (tw > 0 ? 38 : 8) * tw;
+    var sp = springPaths(lead, 40 + 10 * tw);
+    springBack.setAttribute("d", sp.back);
+    springFront.setAttribute("d", sp.front);
+    var tension = Math.min(Math.abs(dDeg) / 90, 1);
+    springFront.setAttribute("stroke", lost ? "var(--alert)" : mixRgb(SPR_FRONT, WARM_FRONT, tension));
+    springBack.setAttribute("stroke", lost ? "#c9a0a0" : mixRgb(SPR_BACK, WARM_BACK, tension));
+
+    lossText.setAttribute("visibility", lost ? "visible" : "hidden");
+  }
+
+  /* ---------------- charts (canvas) ---------------- */
+
+  var waveCv  = document.getElementById("waveChart");
+  var deltaCv = document.getElementById("deltaChart");
+  var wellCv  = document.getElementById("wellChart");
+  var waveCtx  = waveCv.getContext("2d");
+  var deltaCtx = deltaCv.getContext("2d");
+  var wellCtx  = wellCv.getContext("2d");
+
+  function fitCanvas(cv, ctx) {
+    var dpr = window.devicePixelRatio || 1;
+    var w = cv.clientWidth, h = cv.clientHeight;
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) {
+      cv.width = Math.round(w * dpr);
+      cv.height = Math.round(h * dpr);
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { w: w, h: h };
+  }
+
+  /* sine traces of the two wheels: vertical position of each marker spoke,
+     i.e. the momentary generator voltage - their phase shift is delta */
+  function drawWaveChart() {
+    var s = fitCanvas(waveCv, waveCtx);
+    var ctx = waveCtx, w = s.w, h = s.h;
+    ctx.clearRect(0, 0, w, h);
+
+    function yOf(v) { return h / 2 - v * (h / 2 - 10); }
+
+    // zero line
+    ctx.strokeStyle = "#e2e7ec"; ctx.lineWidth = 1; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(0, yOf(0)); ctx.lineTo(w, yOf(0)); ctx.stroke();
+
+    if (waveHist.length > 1) {
+      var t0 = simTime - WINDOW;
+      [["b", "#8fa3b8"], ["a", "#2c405c"]].forEach(function (tr) {
+        ctx.strokeStyle = tr[1]; ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (var i = 0; i < waveHist.length; i++) {
+          var x = (waveHist[i].t - t0) / WINDOW * w;
+          var y = yOf(waveHist[i][tr[0]]);
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      });
+    }
+  }
+
+  function drawDeltaChart() {
+    var s = fitCanvas(deltaCv, deltaCtx);
+    var ctx = deltaCtx, w = s.w, h = s.h;
+    ctx.clearRect(0, 0, w, h);
+
+    var Y_RANGE = 135;  // ±135°
+    function yOf(deg) { return h/2 - deg * (h/2) / Y_RANGE; }
+
+    // grid
+    ctx.strokeStyle = "#e2e7ec"; ctx.lineWidth = 1; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(0, yOf(0)); ctx.lineTo(w, yOf(0)); ctx.stroke();
+    ctx.setLineDash([4, 4]);
+    [90, 45, -45, -90].forEach(function (g) {
+      ctx.beginPath(); ctx.moveTo(0, yOf(g)); ctx.lineTo(w, yOf(g)); ctx.stroke();
+    });
+    ctx.setLineDash([]);
+    ctx.fillStyle = "#8a94a0"; ctx.font = "10px Segoe UI, sans-serif";
+    ctx.fillText("+90°", 4, yOf(90) - 3);
+    ctx.fillText("+45°", 4, yOf(45) - 3);
+    ctx.fillText("0°", 4, yOf(0) - 3);
+    ctx.fillText("−45°", 4, yOf(-45) - 3);
+    ctx.fillText("−90°", 4, yOf(-90) - 3);
+
+    // trace
+    if (history.length > 1) {
+      ctx.strokeStyle = "#2c405c"; ctx.lineWidth = 2;
+      ctx.beginPath();
+      var t0 = simTime - WINDOW;
+      for (var i = 0; i < history.length; i++) {
+        var x = (history[i].t - t0) / WINDOW * w;
+        var y = yOf(history[i].d);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+  }
+
+  function drawWellChart() {
+    var s = fitCanvas(wellCv, wellCtx);
+    var ctx = wellCtx, w = s.w, h = s.h;
+    ctx.clearRect(0, 0, w, h);
+
+    var X_RANGE = 180;  // ±180°
+    function xOf(deg) { return w/2 + deg * (w/2) / X_RANGE; }
+    function yOf(deg) { return h * 0.50 - (-Math.cos(deg * Math.PI / 180)) * h * 0.30; }
+
+    // ticks
+    ctx.fillStyle = "#8a94a0"; ctx.font = "10px Segoe UI, sans-serif";
+    ctx.textAlign = "center";
+    [-135, -90, -45, 0, 45, 90, 135].forEach(function (g) {
+      ctx.fillText((g > 0 ? "+" : "") + g + "°", xOf(g), h - 4);
+    });
+    ctx.textAlign = "left";
+
+    // potential curve
+    ctx.strokeStyle = "#9fb0c3"; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (var px = 0; px <= w; px += 3) {
+      var deg = (px - w/2) / (w/2) * X_RANGE;
+      var y = yOf(deg);
+      if (px === 0) ctx.moveTo(px, y); else ctx.lineTo(px, y);
+    }
+    ctx.stroke();
+
+    // ball at the current delta
+    var dDeg = Math.max(-X_RANGE, Math.min(X_RANGE, deltaDeg()));
+    ctx.fillStyle = lost ? "#a25d5d" : "#2c405c";
+    ctx.beginPath();
+    ctx.arc(xOf(dDeg), yOf(dDeg) - 8, 7, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+
+  /* ---------------- animation loop ---------------- */
+
+  var lastTime = performance.now();
+
+  function loop(now) {
+    var realDt = Math.min((now - lastTime) / 1000, 0.12);
+    lastTime = now;
+
+    advance(realDt);
+    if (!lost) {
+      var fAvg = (freqA() + freqB()) / 2;
+      visCommon = (visCommon + 60 * Math.pow(2, fAvg - 50) * realDt) % 360;
+      var dD = deltaDeg();
+      waveHist.push({
+        t: simTime,
+        a: Math.cos((visCommon + dD / 2) * Math.PI / 180),
+        b: Math.cos((visCommon - dD / 2) * Math.PI / 180)
+      });
+      while (waveHist.length && waveHist[0].t < simTime - WINDOW) waveHist.shift();
+    }
+
+    renderScene();
+    drawWaveChart();
+    drawDeltaChart();
+    drawWellChart();
+
+    requestAnimationFrame(loop);
+  }
+
+  readSliders();
+  renderScene();
+  drawWaveChart();
+  drawDeltaChart();
+  drawWellChart();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
