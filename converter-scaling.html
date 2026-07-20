@@ -4,7 +4,106 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Converter Scaling</title>
-  <link rel="stylesheet" href="design/theme.css">
+  <style>
+  /* ============================================================
+     theme.css – inline eingebettet, damit die Datei komplett
+     eigenständig ist (kein externer design/-Ordner nötig).
+     ============================================================ */
+  :root {
+    --c-blau:        #246CB0;
+    --c-dunkelblau:  #0C3A6E;
+    --c-weiss:       #FFFFFF;
+    --c-schwarz:     #000000;
+    --c-gelb:        #E5BB29;
+    --c-hellblau:    #038DCD;
+    --c-creme:       #EDECE5;
+    --c-grau-hell:   #B9B9B9;
+    --c-grau-dunkel: #4F4F4F;
+    --c-diag-1: #7D0663;
+    --c-diag-2: #A50303;
+    --c-diag-3: #BB6607;
+    --c-diag-4: #7D9A29;
+    --c-diag-5: #258573;
+    --bg:            var(--c-weiss);
+    --bg-panel:      var(--c-creme);
+    --bg-dark:       var(--c-dunkelblau);
+    --text:          var(--c-schwarz);
+    --text-invert:   var(--c-weiss);
+    --text-muted:    var(--c-grau-dunkel);
+    --heading:       var(--c-dunkelblau);
+    --accent:        var(--c-blau);
+    --link:          var(--c-blau);
+    --line:          var(--c-grau-hell);
+    --highlight:     var(--c-gelb);
+    --font: "Segoe UI", "Segoe UI Web", Frutiger, "Frutiger Linotype",
+            "Helvetica Neue", Arial, sans-serif;
+    --fs-h1:    44px;
+    --fs-h2:    30px;
+    --fs-h3:    22px;
+    --fs-body:  18px;
+    --fs-small: 14px;
+    --lh:       1.45;
+    --sp-1: 8px;  --sp-2: 16px; --sp-3: 24px;
+    --sp-4: 32px; --sp-5: 48px; --sp-6: 64px;
+    --radius: 6px;
+    --border: 1px solid var(--line);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font);
+    font-size: var(--fs-body);
+    line-height: var(--lh);
+    color: var(--text);
+    background: var(--c-grau-hell);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .stage {
+    position: relative;
+    width: 1280px;
+    height: 720px;
+    margin: 0 auto;
+    background: var(--bg);
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(12, 58, 110, .18);
+  }
+
+  h1, h2, h3 { color: var(--heading); font-weight: 600; margin: 0 0 var(--sp-2); }
+  h1 { font-size: var(--fs-h1); letter-spacing: -.01em; }
+  h2 { font-size: var(--fs-h2); }
+  h3 { font-size: var(--fs-h3); }
+  p  { margin: 0 0 var(--sp-2); }
+  small, .small { font-size: var(--fs-small); color: var(--text-muted); }
+  a, .link { color: var(--link); text-decoration: none; }
+  a:hover, .link:hover { text-decoration: underline; }
+  .subline { color: var(--c-blau); font-size: var(--fs-h3); font-weight: 500; margin-top: calc(-1 * var(--sp-1)); }
+
+  .accent-mark { background: linear-gradient(transparent 60%, var(--highlight) 60%); padding: 0 2px; }
+  .accent-dot { color: var(--highlight); }
+
+  .panel {
+    background: var(--bg-panel);
+    border: var(--border);
+    border-radius: var(--radius);
+    padding: var(--sp-3);
+  }
+
+  .stage-pad   { padding: var(--sp-5) var(--sp-6); height: 100%; }
+  .header-rule { border-bottom: 2px solid var(--c-blau); padding-bottom: var(--sp-1); margin-bottom: var(--sp-3); }
+
+  .btn {
+    font: 500 var(--fs-body)/1 var(--font);
+    color: var(--text-invert); background: var(--c-blau);
+    border: none; border-radius: var(--radius);
+    padding: var(--sp-1) var(--sp-3); cursor: pointer;
+  }
+  .btn:hover  { background: var(--c-dunkelblau); }
+  .btn--ghost { background: transparent; color: var(--c-blau); border: 1px solid var(--c-blau); }
+  </style>
+
   <style>
     body { display: grid; place-items: center; min-height: 100vh; }
 
