@@ -357,6 +357,11 @@
       stroke-width: 2.5;
     }
 
+    .signal-line--digital-output {
+      stroke: var(--c-running);
+      stroke-width: 2.5;
+    }
+
     .signal-line--feedback {
       stroke: var(--c-fault);
       stroke-dasharray: 5 5;
@@ -389,8 +394,8 @@
       left: 574px;
       transform: translateX(-50%);
     }
-    .wire-label--do-head { top: 174px; color: var(--c-blau); }
-    .wire-label--do-value { top: 203px; color: var(--c-blau); }
+    .wire-label--do-head { top: 174px; color: var(--c-running); }
+    .wire-label--do-value { top: 203px; color: var(--c-running); }
     .wire-label--di-head { top: 229px; color: var(--c-fault); }
     .wire-label--di-value { top: 259px; color: var(--c-fault); }
 
@@ -1047,6 +1052,10 @@
                     markerWidth="5" markerHeight="5" orient="auto-start-reverse">
               <path d="M 0 0 L 10 5 L 0 10 Z" fill="#246CB0"/>
             </marker>
+            <marker id="arrow-green" viewBox="0 0 10 10" refX="8" refY="5"
+                    markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 Z" fill="#258573"/>
+            </marker>
             <marker id="arrow-red" viewBox="0 0 10 10" refX="8" refY="5"
                     markerWidth="5" markerHeight="5" orient="auto-start-reverse">
               <path d="M 0 0 L 10 5 L 0 10 Z" fill="#A50303"/>
@@ -1057,8 +1066,8 @@
                 d="M194 95 H260 V206 H330" marker-end="url(#arrow-blue)"/>
           <path class="signal-line signal-line--command signal-pulse"
                 d="M194 359 H260 V250 H330" marker-end="url(#arrow-blue)"/>
-          <path class="signal-line signal-line--command signal-pulse"
-                d="M506 200 H642" marker-end="url(#arrow-blue)"/>
+          <path class="signal-line signal-line--digital-output signal-pulse"
+                d="M506 200 H642" marker-end="url(#arrow-green)"/>
           <path class="signal-line signal-line--feedback signal-pulse"
                 d="M642 256 H506" marker-end="url(#arrow-red)"/>
           <path class="signal-line signal-line--command signal-pulse"
