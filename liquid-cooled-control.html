@@ -1,0 +1,1719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Liquid Cooled Control</title>
+  <style>
+    :root {
+      --c-blau: #246CB0;
+      --c-dunkelblau: #0C3A6E;
+      --c-weiss: #FFFFFF;
+      --c-schwarz: #000000;
+      --c-gelb: #E5BB29;
+      --c-hellblau: #038DCD;
+      --c-creme: #EDECE5;
+      --c-grau-hell: #B9B9B9;
+      --c-grau-dunkel: #4F4F4F;
+      --c-diag-1: #7D0663;
+      --c-diag-2: #A50303;
+      --c-diag-3: #BB6607;
+      --c-diag-4: #7D9A29;
+      --c-diag-5: #258573;
+      --bg: var(--c-weiss);
+      --bg-panel: var(--c-creme);
+      --bg-dark: var(--c-dunkelblau);
+      --text: var(--c-schwarz);
+      --text-invert: var(--c-weiss);
+      --text-muted: var(--c-grau-dunkel);
+      --heading: var(--c-dunkelblau);
+      --accent: var(--c-blau);
+      --link: var(--c-blau);
+      --line: var(--c-grau-hell);
+      --highlight: var(--c-gelb);
+      --font: "Segoe UI", "Segoe UI Web", Frutiger, "Frutiger Linotype",
+              "Helvetica Neue", Arial, sans-serif;
+      --fs-h1: 44px;
+      --fs-h2: 30px;
+      --fs-h3: 22px;
+      --fs-body: 18px;
+      --fs-small: 14px;
+      --lh: 1.45;
+      --sp-1: 8px;
+      --sp-2: 16px;
+      --sp-3: 24px;
+      --sp-4: 32px;
+      --sp-5: 48px;
+      --sp-6: 64px;
+      --radius: 6px;
+      --border: 1px solid var(--line);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font);
+      font-size: var(--fs-body);
+      line-height: var(--lh);
+      color: var(--text);
+      background: var(--c-grau-hell);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    .stage {
+      position: relative;
+      width: 1280px;
+      height: 720px;
+      margin: 0 auto;
+      overflow: hidden;
+      background: var(--bg);
+      box-shadow: 0 8px 40px rgba(12, 58, 110, .18);
+    }
+
+    .stage--fit {
+      position: fixed;
+      inset: 0;
+      margin: auto;
+      transform-origin: center center;
+    }
+
+    h1, h2, h3 {
+      margin: 0 0 var(--sp-2);
+      color: var(--heading);
+      font-weight: 600;
+    }
+
+    h1 { font-size: var(--fs-h1); letter-spacing: -.01em; }
+    h2 { font-size: var(--fs-h2); }
+    h3 { font-size: var(--fs-h3); }
+    p { margin: 0 0 var(--sp-2); }
+    small, .small { color: var(--text-muted); font-size: var(--fs-small); }
+    a, .link { color: var(--link); text-decoration: none; }
+    a:hover, .link:hover { text-decoration: underline; }
+
+    .subline {
+      margin-top: calc(-1 * var(--sp-1));
+      color: var(--c-blau);
+      font-size: var(--fs-h3);
+      font-weight: 500;
+    }
+
+    blockquote {
+      margin: var(--sp-3) 0;
+      padding: var(--sp-1) 0 var(--sp-1) var(--sp-3);
+      border-left: 3px solid var(--c-blau);
+      color: var(--heading);
+      font-size: var(--fs-h3);
+      font-style: italic;
+    }
+
+    .accent-mark {
+      padding: 0 2px;
+      background: linear-gradient(transparent 60%, var(--highlight) 60%);
+    }
+
+    .accent-dot { color: var(--highlight); }
+
+    .panel {
+      padding: var(--sp-3);
+      border: var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-panel);
+    }
+
+    .panel--fill {
+      border: none;
+      background: var(--c-blau);
+      color: var(--text-invert);
+    }
+
+    .panel--dark {
+      border: none;
+      background: var(--bg-dark);
+      color: var(--text-invert);
+    }
+
+    .panel--dark h1,
+    .panel--dark h2,
+    .panel--dark h3 {
+      color: var(--text-invert);
+    }
+
+    .stage-pad {
+      height: 100%;
+      padding: var(--sp-5) var(--sp-6);
+    }
+
+    .header-rule {
+      margin-bottom: var(--sp-3);
+      padding-bottom: var(--sp-1);
+      border-bottom: 2px solid var(--c-blau);
+    }
+
+    .footer {
+      position: absolute;
+      right: var(--sp-6);
+      bottom: var(--sp-3);
+      left: var(--sp-6);
+      display: flex;
+      justify-content: space-between;
+      padding-top: var(--sp-1);
+      border-top: var(--border);
+      color: var(--text-muted);
+      font-size: var(--fs-small);
+    }
+
+    .btn {
+      padding: var(--sp-1) var(--sp-3);
+      border: none;
+      border-radius: var(--radius);
+      background: var(--c-blau);
+      color: var(--text-invert);
+      cursor: pointer;
+      font: 500 var(--fs-body)/1 var(--font);
+    }
+
+    .btn:hover { background: var(--c-dunkelblau); }
+
+    .btn--ghost {
+      border: 1px solid var(--c-blau);
+      background: transparent;
+      color: var(--c-blau);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--fs-small);
+    }
+
+    th, td {
+      padding: var(--sp-1) var(--sp-2);
+      border-bottom: var(--border);
+      text-align: left;
+    }
+
+    th { color: var(--heading); font-weight: 600; }
+    .series-1 { color: var(--c-diag-1); }
+    .series-2 { color: var(--c-diag-2); }
+    .series-3 { color: var(--c-diag-3); }
+    .series-4 { color: var(--c-diag-4); }
+    .series-5 { color: var(--c-diag-5); }
+    .fill-1 { fill: var(--c-diag-1); stroke: var(--c-diag-1); }
+    .fill-2 { fill: var(--c-diag-2); stroke: var(--c-diag-2); }
+    .fill-3 { fill: var(--c-diag-3); stroke: var(--c-diag-3); }
+    .fill-4 { fill: var(--c-diag-4); stroke: var(--c-diag-4); }
+    .fill-5 { fill: var(--c-diag-5); stroke: var(--c-diag-5); }
+    .axis { stroke: var(--c-grau-dunkel); stroke-width: 1; }
+    .grid { stroke: var(--c-grau-hell); stroke-width: 1; stroke-dasharray: 2 4; }
+    .label { fill: var(--c-schwarz); font: var(--fs-small)/1 var(--font); }
+  </style>
+  <style>
+    :root {
+      --c-running: #258573;
+      --c-heating: #BB6607;
+      --c-fault: #A50303;
+      --c-soft-blue: #F2F8FE;
+      --c-node-border: #B7C9DA;
+    }
+
+    body {
+      display: grid;
+      min-height: 100vh;
+      overflow: hidden;
+      place-items: center;
+    }
+
+    button {
+      font-family: inherit;
+    }
+
+    .svg-sprite {
+      position: absolute;
+      width: 0;
+      height: 0;
+      overflow: hidden;
+    }
+
+    .slide {
+      display: none;
+    }
+
+    .slide.is-active {
+      display: block;
+    }
+
+    .stage-pad {
+      padding: var(--sp-4) var(--sp-5);
+    }
+
+    .header-rule {
+      position: relative;
+      margin-bottom: 14px;
+      padding-right: 150px;
+    }
+
+    h1 {
+      margin-bottom: 2px;
+      font-size: 34px;
+    }
+
+    .subline {
+      font-size: 18px;
+    }
+
+    .case-number {
+      position: absolute;
+      top: 5px;
+      right: 0;
+      color: var(--c-grau-dunkel);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .slide-content {
+      height: 520px;
+    }
+
+    .footer {
+      right: var(--sp-5);
+      bottom: 18px;
+      left: var(--sp-5);
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .deck-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-arrow,
+    .nav-dot {
+      display: grid;
+      border: 1px solid #A9BED1;
+      background: var(--c-weiss);
+      color: var(--c-dunkelblau);
+      cursor: pointer;
+      place-items: center;
+    }
+
+    .nav-arrow {
+      width: 28px;
+      height: 24px;
+      border-radius: 4px;
+      font-size: 17px;
+      line-height: 1;
+    }
+
+    .nav-arrow:disabled {
+      cursor: default;
+      opacity: .35;
+    }
+
+    .nav-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .nav-dot.is-current {
+      border-color: var(--c-blau);
+      background: var(--c-blau);
+      color: var(--c-weiss);
+    }
+
+    .architecture {
+      position: relative;
+      height: 505px;
+    }
+
+    .architecture-wiring {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .signal-line {
+      fill: none;
+      stroke: #7D9CB8;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .signal-line--command {
+      stroke: var(--c-blau);
+      stroke-width: 2.5;
+    }
+
+    .signal-line--feedback {
+      stroke: var(--c-fault);
+      stroke-dasharray: 5 5;
+    }
+
+    .signal-pulse {
+      stroke-dasharray: 6 8;
+      animation: signalFlow 1.5s linear infinite;
+    }
+
+    .wire-label {
+      position: absolute;
+      z-index: 4;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, .94);
+      color: var(--c-grau-dunkel);
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.2;
+      text-align: center;
+    }
+
+    .wire-label--temp { top: 72px; left: 202px; }
+    .wire-label--ipu { top: 362px; left: 202px; }
+    .wire-label--do-head,
+    .wire-label--do-value,
+    .wire-label--di-head,
+    .wire-label--di-value {
+      left: 574px;
+      transform: translateX(-50%);
+    }
+    .wire-label--do-head { top: 174px; color: var(--c-blau); }
+    .wire-label--do-value { top: 203px; color: var(--c-blau); }
+    .wire-label--di-head { top: 229px; color: var(--c-fault); }
+    .wire-label--di-value { top: 259px; color: var(--c-fault); }
+
+    .system-node {
+      position: absolute;
+      z-index: 2;
+      display: grid;
+      width: 176px;
+      height: 106px;
+      padding: 8px 12px 10px;
+      border: 1px solid var(--c-node-border);
+      border-radius: 8px;
+      background: var(--c-weiss);
+      box-shadow: 0 4px 12px rgba(12, 58, 110, .08);
+      color: var(--c-dunkelblau);
+      place-items: center;
+      text-align: center;
+    }
+
+    .system-node .device-icon {
+      width: 82px;
+      height: 56px;
+    }
+
+    .system-node strong {
+      margin-top: -2px;
+      font-size: 15px;
+      line-height: 1.12;
+    }
+
+    .system-node--mio { top: 42px; left: 18px; }
+    .system-node--ipu { top: 306px; left: 18px; }
+    .system-node--ccu { top: 174px; left: 330px; }
+    .system-node--lcu { top: 174px; left: 642px; }
+    .system-node--heater { top: 42px; left: 956px; }
+    .system-node--pump { top: 306px; left: 956px; }
+
+    .case-layout {
+      display: grid;
+      grid-template-columns: 286px minmax(0, 1fr);
+      gap: 18px;
+      height: 500px;
+    }
+
+    .live-panel,
+    .sequence-panel {
+      padding: 16px;
+      border-color: #C7D5E2;
+      background: #F8FAFC;
+    }
+
+    .panel-heading {
+      margin-bottom: 12px;
+      color: var(--c-dunkelblau);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .input-readout {
+      margin-bottom: 12px;
+      padding: 13px 14px;
+      border: 1px solid #C7D5E2;
+      border-radius: 6px;
+      background: var(--c-weiss);
+    }
+
+    .input-readout--compact {
+      padding: 9px 14px 10px;
+    }
+
+    .input-readout--compact .readout-label {
+      margin-bottom: 1px;
+    }
+
+    .readout-label {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--c-grau-dunkel);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .readout-value {
+      display: block;
+      color: var(--c-dunkelblau);
+      font-size: 31px;
+      font-weight: 650;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -.02em;
+      line-height: 1.1;
+    }
+
+    .readout-note {
+      display: block;
+      margin-top: 5px;
+      color: var(--c-grau-dunkel);
+      font-size: 11px;
+      line-height: 1.25;
+    }
+
+    .device-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .live-panel--combined .device-state {
+      min-height: 58px;
+    }
+
+    .device-state {
+      display: grid;
+      grid-template-columns: 54px 1fr auto;
+      min-height: 64px;
+      align-items: center;
+      padding: 6px 9px;
+      border: 1px solid #CDD8E2;
+      border-left: 4px solid var(--c-grau-hell);
+      border-radius: 5px;
+      background: var(--c-weiss);
+      transition: border-color .2s, box-shadow .2s, background .2s;
+    }
+
+    .device-state .device-icon {
+      width: 48px;
+      height: 36px;
+    }
+
+    .device-state-name {
+      color: var(--c-dunkelblau);
+      font-size: 14px;
+      font-weight: 650;
+      line-height: 1.15;
+    }
+
+    .device-state-detail {
+      display: block;
+      margin-top: 2px;
+      color: var(--c-grau-dunkel);
+      font-size: 10px;
+      font-weight: 500;
+    }
+
+    .device-state.is-active {
+      border-left-color: var(--c-running);
+      background: #F3FAF8;
+      box-shadow: 0 3px 10px rgba(37, 133, 115, .12);
+    }
+
+    .device-state.is-heating {
+      border-left-color: var(--c-heating);
+      background: #FCF7F1;
+      box-shadow: 0 3px 10px rgba(187, 102, 7, .12);
+    }
+
+    .device-state.is-fault {
+      border-left-color: var(--c-fault);
+      background: #FDF4F4;
+      box-shadow: 0 3px 10px rgba(165, 3, 3, .12);
+    }
+
+    .status-pill {
+      min-width: 48px;
+      padding: 4px 7px;
+      border-radius: 999px;
+      background: #E9EDF1;
+      color: var(--c-grau-dunkel);
+      font-size: 10px;
+      font-weight: 750;
+      letter-spacing: .05em;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .status-pill.status--on {
+      background: #DDEFEA;
+      color: #176454;
+    }
+
+    .status-pill.status--heat {
+      background: #F4E5D2;
+      color: #8C4A00;
+    }
+
+    .status-pill.status--fault {
+      background: #F2D9D9;
+      color: var(--c-fault);
+    }
+
+    .timer-card {
+      display: flex;
+      min-height: 58px;
+      margin-top: 10px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border: 1px solid #CDD8E2;
+      border-radius: 5px;
+      background: var(--c-dunkelblau);
+      color: var(--c-weiss);
+    }
+
+    .timer-card span:first-child {
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.15;
+    }
+
+    .timer-value {
+      font-size: 22px;
+      font-weight: 650;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: .03em;
+    }
+
+    .sequence-panel {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .phase-header {
+      display: flex;
+      min-height: 62px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding: 9px 12px;
+      border-left: 4px solid var(--c-blau);
+      border-radius: 4px;
+      background: var(--c-weiss);
+    }
+
+    .phase-kicker {
+      display: block;
+      color: var(--c-blau);
+      font-size: 10px;
+      font-weight: 750;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .phase-title {
+      display: block;
+      margin-top: 1px;
+      color: var(--c-dunkelblau);
+      font-size: 20px;
+      font-weight: 650;
+      line-height: 1.05;
+    }
+
+    .phase-note {
+      min-width: 0;
+      margin-left: 18px;
+      color: var(--c-grau-dunkel);
+      flex: 1;
+      font-size: 11px;
+      line-height: 1.25;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .timeline-plot {
+      position: relative;
+      height: 326px;
+      margin: 0 2px 0 82px;
+    }
+
+    .temp-chart {
+      position: relative;
+      height: 142px;
+      border-bottom: 1px solid #C9D5E0;
+    }
+
+    .temp-chart-label {
+      position: absolute;
+      top: 8px;
+      left: -80px;
+      width: 70px;
+      color: var(--c-grau-dunkel);
+      font-size: 11px;
+      font-weight: 650;
+      line-height: 1.15;
+    }
+
+    .temp-chart svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .chart-grid {
+      stroke: #D5DEE6;
+      stroke-width: 1;
+      stroke-dasharray: 3 5;
+    }
+
+    .chart-threshold {
+      stroke: var(--c-heating);
+      stroke-width: 1.3;
+      stroke-dasharray: 5 4;
+    }
+
+    .chart-curve {
+      fill: none;
+      stroke: var(--c-blau);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .chart-text {
+      fill: var(--c-grau-dunkel);
+      font: 10px/1 var(--font);
+    }
+
+    .lane-row {
+      position: relative;
+      height: 50px;
+      padding-top: 17px;
+    }
+
+    .lane-label {
+      position: absolute;
+      top: 17px;
+      left: -80px;
+      width: 70px;
+      color: var(--c-grau-dunkel);
+      font-size: 11px;
+      font-weight: 650;
+    }
+
+    .lane-track {
+      position: relative;
+      height: 18px;
+      overflow: hidden;
+      border: 1px solid #CBD6E0;
+      border-radius: 3px;
+      background: #E9EDF1;
+    }
+
+    .lane-segment {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+    }
+
+    .lane-segment--request { background: var(--c-blau); }
+    .lane-segment--running { background: var(--c-running); }
+    .lane-segment--heating { background: var(--c-heating); }
+    .lane-segment--fault { background: var(--c-fault); }
+
+    .lane-axis {
+      position: relative;
+      height: 25px;
+      border-top: 1px solid #9DB2C4;
+      color: var(--c-grau-dunkel);
+      font-size: 10px;
+    }
+
+    .lane-axis span {
+      position: absolute;
+      top: 4px;
+      transform: translateX(-50%);
+    }
+
+    .lane-axis span:first-child {
+      transform: none;
+    }
+
+    .lane-axis span:last-child {
+      transform: translateX(-100%);
+    }
+
+    .timeline-plot--combined {
+      height: 326px;
+      margin: 0 2px;
+      cursor: ew-resize;
+      user-select: none;
+    }
+
+    .timeline-plot--combined .temp-chart {
+      height: 90px;
+      padding-top: 16px;
+    }
+
+    .timeline-plot--combined .temp-chart-label {
+      top: 0;
+      left: 0;
+      width: auto;
+      font-size: 10px;
+    }
+
+    .timeline-plot--combined .temp-chart svg {
+      height: 74px;
+    }
+
+    .timeline-plot--combined .lane-row {
+      height: 35px;
+      padding-top: 17px;
+    }
+
+    .timeline-plot--combined .lane-label {
+      top: 1px;
+      left: 0;
+      width: auto;
+      font-size: 10px;
+    }
+
+    .timeline-plot--combined .lane-track {
+      height: 16px;
+    }
+
+    .timeline-plot--combined .lane-axis span:first-child,
+    .timeline-plot--combined .lane-axis span:last-child {
+      transform: translateX(-50%);
+    }
+
+    .device-state--trigger {
+      width: 100%;
+      appearance: none;
+      cursor: pointer;
+      font: inherit;
+      text-align: left;
+    }
+
+    .device-state--trigger:hover,
+    .device-state--trigger:focus-visible {
+      border-color: var(--c-fault);
+      background: #FDF4F4;
+      outline: none;
+    }
+
+    .device-state--trigger.is-fault {
+      animation: faultPulse .65s ease-out 1;
+    }
+
+    .playhead {
+      position: absolute;
+      z-index: 5;
+      top: 0;
+      bottom: 23px;
+      left: var(--progress, 0%);
+      width: 2px;
+      background: var(--c-dunkelblau);
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, .7);
+      cursor: ew-resize;
+      pointer-events: auto;
+      transform: translateX(-1px);
+    }
+
+    .playhead:focus-visible {
+      width: 3px;
+      outline: 2px solid rgba(36, 108, 176, .35);
+      outline-offset: 2px;
+    }
+
+    .case-controls {
+      position: absolute;
+      right: 16px;
+      bottom: 14px;
+      left: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 9px;
+      border-top: 1px solid #D5DEE6;
+    }
+
+    .control-buttons {
+      display: flex;
+      gap: 7px;
+      margin-left: auto;
+    }
+
+    .case-controls .btn {
+      min-width: 72px;
+      padding: 7px 12px;
+      font-size: 12px;
+    }
+
+    @keyframes signalFlow {
+      to { stroke-dashoffset: -28; }
+    }
+
+    @keyframes faultPulse {
+      0% { transform: translateX(-5px); }
+      35% { transform: translateX(4px); }
+      70% { transform: translateX(-2px); }
+      100% { transform: translateX(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .signal-pulse {
+        animation: none;
+      }
+
+      .device-state,
+      .device-state--trigger {
+        transition: none;
+        animation: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <svg class="svg-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <symbol id="icon-mio" viewBox="0 0 120 82">
+        <rect x="14" y="12" width="92" height="58" rx="7"
+              fill="#F2F8FE" stroke="#246CB0" stroke-width="2.5"/>
+        <g fill="none" stroke="#0C3A6E" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M25 37
+                   C27.92 31.24 30.83 26 33.75 26
+                   C36.67 26 39.58 31.24 42.5 37
+                   C45.42 42.76 48.33 48 51.25 48
+                   C54.17 48 57.08 42.76 60 37
+                   C62.92 31.24 65.83 26 68.75 26
+                   C71.67 26 74.58 31.24 77.5 37
+                   C80.42 42.76 83.33 48 86.25 48
+                   C89.17 48 92.08 42.76 95 37"
+                stroke-width="3"/>
+          <g stroke-width="2">
+            <line x1="33.75" y1="26" x2="33.75" y2="56"/>
+            <line x1="42.5" y1="37" x2="42.5" y2="56"/>
+            <line x1="51.25" y1="48" x2="51.25" y2="56"/>
+            <line x1="60" y1="37" x2="60" y2="56"/>
+            <line x1="68.75" y1="26" x2="68.75" y2="56"/>
+            <line x1="77.5" y1="37" x2="77.5" y2="56"/>
+            <line x1="86.25" y1="48" x2="86.25" y2="56"/>
+            <line x1="25" y1="56" x2="95" y2="56"/>
+          </g>
+        </g>
+        <g fill="#246CB0">
+          <circle cx="33.75" cy="26" r="2.5"/>
+          <circle cx="42.5" cy="37" r="2.5"/>
+          <circle cx="51.25" cy="48" r="2.5"/>
+          <circle cx="60" cy="37" r="2.5"/>
+          <circle cx="68.75" cy="26" r="2.5"/>
+          <circle cx="77.5" cy="37" r="2.5"/>
+          <circle cx="86.25" cy="48" r="2.5"/>
+        </g>
+      </symbol>
+
+      <symbol id="icon-ipu" viewBox="0 0 120 82">
+        <rect x="14" y="12" width="92" height="58" rx="7"
+              fill="#F2F8FE" stroke="#246CB0" stroke-width="2.5"/>
+        <g fill="none" stroke="#0C3A6E" stroke-width="3"
+           stroke-linecap="round" stroke-linejoin="round">
+          <line x1="30" y1="41" x2="43" y2="41"/>
+          <line x1="43" y1="30" x2="43" y2="52"/>
+          <line x1="49" y1="26" x2="49" y2="56"/>
+          <line x1="62" y1="20" x2="49" y2="32"/>
+          <line x1="49" y1="50" x2="62" y2="62"/>
+          <line x1="62" y1="20" x2="82" y2="20"/>
+          <line x1="62" y1="62" x2="82" y2="62"/>
+          <line x1="82" y1="20" x2="82" y2="30"/>
+          <line x1="82" y1="50" x2="82" y2="62"/>
+          <line x1="75" y1="30" x2="89" y2="30"/>
+          <path d="M75 50 L89 50 L82 31 Z"/>
+        </g>
+        <polygon points="61,61 53.5,58.5 57.5,53.5" fill="#0C3A6E"/>
+        <circle cx="97" cy="61" r="4" fill="#7D9A29"/>
+      </symbol>
+
+      <symbol id="icon-ccu" viewBox="0 0 120 82">
+        <rect x="14" y="12" width="92" height="58" rx="7"
+              fill="#F2F8FE" stroke="#246CB0" stroke-width="2.5"/>
+        <g fill="none" stroke="#0C3A6E" stroke-width="3"
+           stroke-linecap="round" stroke-linejoin="round">
+          <rect x="46" y="27" width="28" height="28" rx="4" fill="#FFFFFF"/>
+          <line x1="38" y1="34" x2="46" y2="34"/>
+          <line x1="38" y1="48" x2="46" y2="48"/>
+          <line x1="74" y1="34" x2="82" y2="34"/>
+          <line x1="74" y1="48" x2="82" y2="48"/>
+          <line x1="53" y1="21" x2="53" y2="27"/>
+          <line x1="67" y1="21" x2="67" y2="27"/>
+          <line x1="53" y1="55" x2="53" y2="61"/>
+          <line x1="67" y1="55" x2="67" y2="61"/>
+          <path d="M52 45 L57 38 L62 45 L68 36"/>
+        </g>
+      </symbol>
+
+      <symbol id="icon-lcu" viewBox="0 0 120 82">
+        <rect x="14" y="12" width="92" height="58" rx="7"
+              fill="#F2F8FE" stroke="#246CB0" stroke-width="2.5"/>
+        <g fill="none" stroke="#0C3A6E" stroke-width="3"
+           stroke-linecap="round" stroke-linejoin="round">
+          <rect x="43" y="24" width="34" height="34" rx="5" fill="#FFFFFF"/>
+          <path d="M51 48 C51 42 57 39 60 34 C63 39 69 42 69 48
+                   C69 53 65 56 60 56 C55 56 51 53 51 48 Z"/>
+          <line x1="32" y1="31" x2="43" y2="31"/>
+          <line x1="32" y1="51" x2="43" y2="51"/>
+          <line x1="77" y1="31" x2="88" y2="31"/>
+          <line x1="77" y1="51" x2="88" y2="51"/>
+        </g>
+        <g fill="#246CB0">
+          <circle cx="32" cy="31" r="3"/>
+          <circle cx="32" cy="51" r="3"/>
+          <circle cx="88" cy="31" r="3"/>
+          <circle cx="88" cy="51" r="3"/>
+        </g>
+      </symbol>
+
+      <symbol id="icon-heater" viewBox="0 0 120 82">
+        <rect x="14" y="12" width="92" height="58" rx="7"
+              fill="#F2F8FE" stroke="#246CB0" stroke-width="2.5"/>
+        <g fill="none" stroke="#0C3A6E" stroke-width="3"
+           stroke-linecap="round" stroke-linejoin="round">
+          <line x1="27" y1="51" x2="38" y2="51"/>
+          <path d="M38 51
+                   C38 43 45 43 45 51
+                   C45 59 52 59 52 51
+                   C52 43 59 43 59 51
+                   C59 59 66 59 66 51
+                   C66 43 73 43 73 51
+                   C73 59 80 59 80 51"/>
+          <line x1="80" y1="51" x2="93" y2="51"/>
+          <path d="M43 37 C38 32 47 29 42 24"/>
+          <path d="M60 37 C55 32 64 29 59 24"/>
+          <path d="M77 37 C72 32 81 29 76 24"/>
+        </g>
+      </symbol>
+
+      <symbol id="icon-pump" viewBox="0 0 120 82">
+        <rect x="14" y="12" width="92" height="58" rx="7"
+              fill="#F2F8FE" stroke="#246CB0" stroke-width="2.5"/>
+        <g fill="none" stroke="#0C3A6E" stroke-width="3"
+           stroke-linecap="round" stroke-linejoin="round">
+          <line x1="25" y1="41" x2="39" y2="41"/>
+          <circle cx="59" cy="41" r="20" fill="#FFFFFF"/>
+          <path d="M59 41 C63 29 72 31 72 36 C72 41 66 43 59 41 Z"/>
+          <path d="M59 41 C69 48 64 56 59 55 C54 54 54 48 59 41 Z"/>
+          <path d="M59 41 C48 46 43 38 46 34 C49 30 54 34 59 41 Z"/>
+          <circle cx="59" cy="41" r="3" fill="#246CB0" stroke="none"/>
+          <line x1="79" y1="41" x2="95" y2="41"/>
+          <path d="M89 35 L95 41 L89 47"/>
+        </g>
+      </symbol>
+    </defs>
+  </svg>
+
+  <main class="stage slide is-active" id="overview" data-page="1">
+    <div class="stage-pad">
+      <header class="header-rule">
+        <span class="case-number">System overview</span>
+        <h1>Liquid Cooled Control</h1>
+        <div class="subline">CCU control boundary and cooling system interfaces</div>
+      </header>
+
+      <section class="slide-content architecture" aria-label="Liquid cooled control architecture">
+        <svg class="architecture-wiring" viewBox="0 0 1184 505" aria-hidden="true">
+          <defs>
+            <marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5"
+                    markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 Z" fill="#246CB0"/>
+            </marker>
+            <marker id="arrow-red" viewBox="0 0 10 10" refX="8" refY="5"
+                    markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 Z" fill="#A50303"/>
+            </marker>
+          </defs>
+
+          <path class="signal-line signal-line--command signal-pulse"
+                d="M194 95 H260 V206 H330" marker-end="url(#arrow-blue)"/>
+          <path class="signal-line signal-line--command signal-pulse"
+                d="M194 359 H260 V250 H330" marker-end="url(#arrow-blue)"/>
+          <path class="signal-line signal-line--command signal-pulse"
+                d="M506 200 H642" marker-end="url(#arrow-blue)"/>
+          <path class="signal-line signal-line--feedback signal-pulse"
+                d="M642 256 H506" marker-end="url(#arrow-red)"/>
+          <path class="signal-line signal-line--command signal-pulse"
+                d="M818 207 H890 V95 H956" marker-end="url(#arrow-blue)"/>
+          <path class="signal-line signal-line--command signal-pulse"
+                d="M818 249 H890 V359 H956" marker-end="url(#arrow-blue)"/>
+        </svg>
+
+        <span class="wire-label wire-label--temp">Temperature</span>
+        <span class="wire-label wire-label--ipu">State</span>
+        <span class="wire-label wire-label--do-head">Digital Output</span>
+        <span class="wire-label wire-label--do-value">Pump &amp; Heater</span>
+        <span class="wire-label wire-label--di-head">Digital Input</span>
+        <span class="wire-label wire-label--di-value">Pressure Loss</span>
+
+        <article class="system-node system-node--mio">
+          <svg class="device-icon" viewBox="0 0 120 82" aria-hidden="true">
+            <use href="#icon-mio"></use>
+          </svg>
+          <strong>MIO</strong>
+        </article>
+
+        <article class="system-node system-node--ipu">
+          <svg class="device-icon" viewBox="0 0 120 82" aria-hidden="true">
+            <use href="#icon-ipu"></use>
+          </svg>
+          <strong>IPU</strong>
+        </article>
+
+        <article class="system-node system-node--ccu">
+          <svg class="device-icon" viewBox="0 0 120 82" aria-hidden="true">
+            <use href="#icon-ccu"></use>
+          </svg>
+          <strong>CCU</strong>
+        </article>
+
+        <article class="system-node system-node--lcu">
+          <svg class="device-icon" viewBox="0 0 120 82" aria-hidden="true">
+            <use href="#icon-lcu"></use>
+          </svg>
+          <strong>Liquid Cooling Unit</strong>
+        </article>
+
+        <article class="system-node system-node--heater">
+          <svg class="device-icon" viewBox="0 0 120 82" aria-hidden="true">
+            <use href="#icon-heater"></use>
+          </svg>
+          <strong>Heater</strong>
+        </article>
+
+        <article class="system-node system-node--pump">
+          <svg class="device-icon" viewBox="0 0 120 82" aria-hidden="true">
+            <use href="#icon-pump"></use>
+          </svg>
+          <strong>Pump</strong>
+        </article>
+
+      </section>
+    </div>
+
+    <footer class="footer">
+      <nav class="deck-nav" aria-label="Presentation navigation"></nav>
+    </footer>
+  </main>
+
+  <main class="stage slide" id="case-1" data-page="2">
+    <div class="stage-pad">
+      <header class="header-rule">
+        <h1>Temperature and IPU cooling demand</h1>
+        <div class="subline">Heater and IPU demand with pump timing and pressure-loss override</div>
+      </header>
+
+      <section class="slide-content case-layout" aria-label="Temperature and IPU cooling control animation">
+        <aside class="panel live-panel live-panel--combined">
+          <div class="panel-heading">Live state</div>
+
+          <div class="input-readout input-readout--compact">
+            <span class="readout-label">Temperatur</span>
+            <span class="readout-value" data-c1-temp>22.6 °C</span>
+          </div>
+
+          <div class="device-list">
+            <div class="device-state" data-c1-ipu>
+              <svg class="device-icon" viewBox="0 0 120 82" aria-hidden="true">
+                <use href="#icon-ipu"></use>
+              </svg>
+              <span class="device-state-name">IPU</span>
+              <span class="status-pill" data-c1-ipu-status>Off</span>
+            </div>
+
+            <div class="device-state" data-c1-pump>
+              <svg class="device-icon" viewBox="0 0 120 82" aria-hidden="true">
+                <use href="#icon-pump"></use>
+              </svg>
+              <span class="device-state-name">Pump</span>
+              <span class="status-pill" data-c1-pump-status>Off</span>
+            </div>
+
+            <div class="device-state" data-c1-heater>
+              <svg class="device-icon" viewBox="0 0 120 82" aria-hidden="true">
+                <use href="#icon-heater"></use>
+              </svg>
+              <span class="device-state-name">Heater</span>
+              <span class="status-pill" data-c1-heater-status>Off</span>
+            </div>
+
+            <button class="device-state device-state--trigger" type="button"
+                    data-c1-pressure-row data-pressure-trigger aria-pressed="false">
+              <svg class="device-icon" viewBox="0 0 120 82" aria-hidden="true">
+                <use href="#icon-lcu"></use>
+              </svg>
+              <span class="device-state-name">Pressure DI</span>
+              <span class="status-pill status--on" data-c1-pressure-status>OK</span>
+            </button>
+          </div>
+
+          <div class="timer-card">
+            <span data-c1-timer-label>Timer<br>inactive</span>
+            <span class="timer-value" data-c1-timer>—</span>
+          </div>
+
+        </aside>
+
+        <article class="panel sequence-panel">
+          <div class="phase-header">
+            <div>
+              <span class="phase-kicker">Current phase</span>
+              <span class="phase-title" data-c1-phase>Monitoring</span>
+            </div>
+            <span class="phase-note" data-c1-note>Temperature remains above the heater threshold.</span>
+          </div>
+
+          <div class="timeline-plot timeline-plot--combined" data-c1-plot
+               title="Click or drag to set the timeline position">
+            <div class="temp-chart">
+              <span class="temp-chart-label">Temperature</span>
+              <svg viewBox="0 0 740 108" preserveAspectRatio="none" aria-hidden="true">
+                <line class="chart-grid" x1="0" y1="15" x2="740" y2="15"/>
+                <line class="chart-threshold" x1="0" y1="39" x2="740" y2="39"/>
+                <line class="chart-threshold" x1="0" y1="84" x2="740" y2="84"/>
+                <path class="chart-curve"
+                      d="M0 28
+                         C18 34 37 66 53 87
+                         C82 98 126 96 159 94
+                         C202 88 236 57 264 36
+                         C302 21 336 22 370 24
+                         C485 24 620 26 740 28"/>
+              </svg>
+            </div>
+
+            <div class="lane-row">
+              <span class="lane-label">IPU active</span>
+              <div class="lane-track">
+                <span class="lane-segment lane-segment--request" data-c1-state-segment
+                      data-start="57.14" data-end="71.43" style="left:57.14%;width:14.29%;"></span>
+              </div>
+            </div>
+
+            <div class="lane-row">
+              <span class="lane-label">Pump active</span>
+              <div class="lane-track">
+                <span class="lane-segment lane-segment--running" data-c1-state-segment
+                      data-start="7.14" data-end="50" style="left:7.14%;width:42.86%;"></span>
+                <span class="lane-segment lane-segment--running" data-c1-state-segment
+                      data-start="57.14" data-end="85.71" style="left:57.14%;width:28.57%;"></span>
+              </div>
+            </div>
+
+            <div class="lane-row">
+              <span class="lane-label">Heater active</span>
+              <div class="lane-track">
+                <span class="lane-segment lane-segment--heating" data-c1-state-segment
+                      data-start="21.43" data-end="35.71" style="left:21.43%;width:14.28%;"></span>
+              </div>
+            </div>
+
+            <div class="lane-row">
+              <span class="lane-label">Heater request</span>
+              <div class="lane-track">
+                <span class="lane-segment lane-segment--request" data-c1-state-segment
+                      data-start="7.14" data-end="35.71" style="left:7.14%;width:28.57%;"></span>
+              </div>
+            </div>
+
+            <div class="lane-row">
+              <span class="lane-label">Pump pre-/overrun</span>
+              <div class="lane-track">
+                <span class="lane-segment lane-segment--request" data-c1-state-segment
+                      data-start="7.14" data-end="21.43" style="left:7.14%;width:14.29%;opacity:.48;"></span>
+                <span class="lane-segment lane-segment--request" data-c1-state-segment
+                      data-start="35.71" data-end="50" style="left:35.71%;width:14.29%;opacity:.48;"></span>
+                <span class="lane-segment lane-segment--request" data-c1-state-segment
+                      data-start="71.43" data-end="85.71" style="left:71.43%;width:14.28%;opacity:.48;"></span>
+              </div>
+            </div>
+
+            <div class="lane-row">
+              <span class="lane-label">Pressure Loss</span>
+              <div class="lane-track">
+                <span class="lane-segment lane-segment--fault"
+                      data-c1-pressure-segment style="left:100%;width:0;"></span>
+              </div>
+            </div>
+
+            <div class="lane-axis">
+              <span style="left:7.14%;">&lt;20°C</span>
+              <span style="left:21.43%;">pre-run done</span>
+              <span style="left:50%;">over-run done</span>
+              <span style="left:85.71%;">over-run done</span>
+            </div>
+
+            <span class="playhead" role="slider" tabindex="0"
+                  aria-label="Timeline position" aria-valuemin="0"
+                  aria-valuemax="100" aria-valuenow="0"></span>
+          </div>
+
+          <div class="case-controls">
+            <div class="control-buttons">
+              <button class="btn btn--ghost" type="button" data-control="pause" data-case="2">Pause</button>
+              <button class="btn" type="button" data-control="replay" data-case="2">Replay</button>
+            </div>
+          </div>
+        </article>
+      </section>
+    </div>
+
+    <footer class="footer">
+      <nav class="deck-nav" aria-label="Presentation navigation"></nav>
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      const slides = Array.from(document.querySelectorAll('.slide'));
+      const BASE_WIDTH = 1280;
+      const BASE_HEIGHT = 720;
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let currentPage = 1;
+
+      function query(selector) {
+        return document.querySelector(selector);
+      }
+
+      function setStatus(element, text, type) {
+        element.textContent = text;
+        element.className = 'status-pill' + (type ? ' status--' + type : '');
+      }
+
+      function setDevice(element, state) {
+        element.classList.remove('is-active', 'is-heating', 'is-fault');
+        if (state) {
+          element.classList.add('is-' + state);
+        }
+      }
+
+      function formatTimer(seconds) {
+        const safeSeconds = Math.max(0, Math.ceil(seconds));
+        const minutes = Math.floor(safeSeconds / 60);
+        const remainder = safeSeconds % 60;
+        return String(minutes).padStart(2, '0') + ':' + String(remainder).padStart(2, '0');
+      }
+
+      function setProgress(plot, elapsed, duration) {
+        const progress = (elapsed / duration) * 100;
+        plot.style.setProperty('--progress', progress.toFixed(2) + '%');
+        plot.querySelector('.playhead').setAttribute('aria-valuenow', Math.round(progress));
+      }
+
+      const caseOne = {
+        duration: 28000,
+        pressureLoss: false,
+        tripProgress: 100,
+        tripTemperature: 22.6,
+        reset: function () {
+          this.pressureLoss = false;
+          this.tripProgress = 100;
+          this.tripTemperature = 22.6;
+        },
+        render: function (elapsed) {
+          let temperature;
+          let phase;
+          let note;
+          let ipu = false;
+          let pump = false;
+          let heater = false;
+          let timer = '—';
+          let timerLabel = 'Timer<br>inactive';
+
+          if (elapsed < 2000) {
+            temperature = 22.6 - 2.8 * (elapsed / 2000);
+            phase = 'Monitoring';
+            note = 'Temperature remains above the heater threshold.';
+          } else if (elapsed < 6000) {
+            const ratio = (elapsed - 2000) / 4000;
+            temperature = 19.8 - .4 * ratio;
+            phase = 'Pump pre-run';
+            note = 'Heat is requested; the heater waits for the 2:00 min pump pre-run.';
+            pump = true;
+            timer = formatTimer(120 * (1 - ratio));
+            timerLabel = 'Pump pre-run<br>remaining';
+          } else if (elapsed < 10000) {
+            const ratio = (elapsed - 6000) / 4000;
+            temperature = 19.4 + 2.8 * ratio;
+            phase = 'Heating';
+            note = 'Pump and heater are active while coolant temperature rises.';
+            pump = true;
+            heater = true;
+            timer = '00:00';
+            timerLabel = 'pre-run<br>complete';
+          } else if (elapsed < 14000) {
+            const ratio = (elapsed - 10000) / 4000;
+            temperature = 22.2 + .3 * ratio;
+            phase = 'Pump overrun · Heater';
+            note = 'The heater is off; the pump continues for the 2:00 min overrun.';
+            pump = true;
+            timer = formatTimer(120 * (1 - ratio));
+            timerLabel = 'Pump overrun<br>remaining';
+          } else if (elapsed < 16000) {
+            temperature = 22.5;
+            phase = 'Standby';
+            note = 'The heater overrun is complete. Pump and heater are off.';
+          } else if (elapsed < 20000) {
+            temperature = 22.5;
+            phase = 'IPU active';
+            note = 'The active IPU requests cooling and switches the pump on.';
+            ipu = true;
+            pump = true;
+          } else if (elapsed < 24000) {
+            const ratio = (elapsed - 20000) / 4000;
+            temperature = 22.5;
+            phase = 'Pump overrun · IPU';
+            note = 'The IPU is off; the pump continues for the 2:00 min overrun.';
+            pump = true;
+            timer = formatTimer(120 * (1 - ratio));
+            timerLabel = 'Pump overrun<br>remaining';
+          } else {
+            temperature = 22.5;
+            phase = 'Standby';
+            note = 'Overrun is complete. IPU, pump and heater are off.';
+          }
+
+          if (this.pressureLoss) {
+            temperature = this.tripTemperature;
+            phase = 'Immediate shutdown';
+            note = 'Pressure loss overrides all requests; IPU, pump and heater are off.';
+            ipu = false;
+            pump = false;
+            heater = false;
+            timer = '00:00';
+            timerLabel = 'Safety shutdown<br>no delay';
+          }
+
+          query('[data-c1-temp]').textContent = temperature.toFixed(1) + ' °C';
+          query('[data-c1-phase]').textContent = phase;
+          query('[data-c1-note]').textContent = note;
+          query('[data-c1-timer]').textContent = timer;
+          query('[data-c1-timer-label]').innerHTML = timerLabel;
+          setDevice(query('[data-c1-ipu]'), ipu ? 'active' : '');
+          setDevice(query('[data-c1-pump]'), pump ? 'active' : '');
+          setDevice(query('[data-c1-heater]'), heater ? 'heating' : '');
+          setDevice(query('[data-c1-pressure-row]'), this.pressureLoss ? 'fault' : '');
+          setStatus(query('[data-c1-ipu-status]'), ipu ? 'On' : 'Off', ipu ? 'on' : '');
+          setStatus(query('[data-c1-pump-status]'), pump ? 'On' : 'Off', pump ? 'on' : '');
+          setStatus(query('[data-c1-heater-status]'), heater ? 'On' : 'Off', heater ? 'heat' : '');
+          setStatus(
+            query('[data-c1-pressure-status]'),
+            this.pressureLoss ? 'Loss' : 'OK',
+            this.pressureLoss ? 'fault' : 'on'
+          );
+
+          const pressureTrigger = query('[data-pressure-trigger]');
+          const pressureSegment = query('[data-c1-pressure-segment]');
+          pressureTrigger.setAttribute('aria-pressed', this.pressureLoss ? 'true' : 'false');
+          pressureSegment.style.left = this.tripProgress.toFixed(2) + '%';
+          pressureSegment.style.width = (100 - this.tripProgress).toFixed(2) + '%';
+
+          const cutoff = this.pressureLoss ? this.tripProgress : 100;
+          document.querySelectorAll('[data-c1-state-segment]').forEach(function (segment) {
+            const start = Number(segment.dataset.start);
+            const end = Number(segment.dataset.end);
+            segment.style.left = start.toFixed(2) + '%';
+            segment.style.width = Math.max(0, Math.min(end, cutoff) - start).toFixed(2) + '%';
+          });
+
+          setProgress(query('[data-c1-plot]'), elapsed, this.duration);
+        }
+      };
+
+      const animations = {
+        2: Object.assign(caseOne, { elapsed: 0, startedAt: performance.now(), paused: false })
+      };
+
+      function updatePauseButtons(page) {
+        document.querySelectorAll('[data-control="pause"]').forEach(function (button) {
+          const casePage = Number(button.dataset.case);
+          button.textContent = animations[casePage].paused ? 'Resume' : 'Pause';
+          button.setAttribute('aria-pressed', animations[casePage].paused ? 'true' : 'false');
+        });
+      }
+
+      function resetAnimation(page) {
+        const animation = animations[page];
+        if (!animation) {
+          return;
+        }
+
+        if (typeof animation.reset === 'function') {
+          animation.reset();
+        }
+        animation.elapsed = 0;
+        animation.startedAt = performance.now();
+        animation.paused = reducedMotion;
+        animation.render(0);
+        updatePauseButtons(page);
+      }
+
+      function seekAnimation(progress) {
+        const animation = animations[2];
+        const clampedProgress = Math.min(Math.max(progress, 0), 1);
+        animation.elapsed = clampedProgress * animation.duration;
+        animation.startedAt = performance.now() - animation.elapsed;
+        animation.paused = true;
+        animation.render(animation.elapsed);
+        updatePauseButtons(2);
+      }
+
+      function enableTimelineSeeking() {
+        const plot = query('[data-c1-plot]');
+        const playhead = plot.querySelector('.playhead');
+        let dragging = false;
+
+        function seekFromPointer(event) {
+          const bounds = plot.getBoundingClientRect();
+          seekAnimation((event.clientX - bounds.left) / bounds.width);
+        }
+
+        plot.addEventListener('pointerdown', function (event) {
+          if (event.button !== 0) {
+            return;
+          }
+          dragging = true;
+          plot.setPointerCapture(event.pointerId);
+          seekFromPointer(event);
+          event.preventDefault();
+        });
+
+        plot.addEventListener('pointermove', function (event) {
+          if (dragging) {
+            seekFromPointer(event);
+          }
+        });
+
+        function stopDragging(event) {
+          if (!dragging) {
+            return;
+          }
+          dragging = false;
+          if (plot.hasPointerCapture(event.pointerId)) {
+            plot.releasePointerCapture(event.pointerId);
+          }
+        }
+
+        plot.addEventListener('pointerup', stopDragging);
+        plot.addEventListener('pointercancel', stopDragging);
+
+        playhead.addEventListener('keydown', function (event) {
+          let progress = Number(playhead.getAttribute('aria-valuenow')) / 100;
+          const step = event.shiftKey ? .05 : .01;
+
+          if (event.key === 'ArrowLeft') {
+            progress -= step;
+          } else if (event.key === 'ArrowRight') {
+            progress += step;
+          } else if (event.key === 'Home') {
+            progress = 0;
+          } else if (event.key === 'End') {
+            progress = 1;
+          } else {
+            return;
+          }
+
+          event.preventDefault();
+          event.stopPropagation();
+          seekAnimation(progress);
+        });
+      }
+
+      function buildNavigation() {
+        document.querySelectorAll('.deck-nav').forEach(function (nav) {
+          const previous = document.createElement('button');
+          previous.type = 'button';
+          previous.className = 'nav-arrow';
+          previous.dataset.direction = '-1';
+          previous.setAttribute('aria-label', 'Previous slide');
+          previous.textContent = '‹';
+          nav.appendChild(previous);
+
+          slides.forEach(function (slide, index) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'nav-dot';
+            button.dataset.go = String(index + 1);
+            button.setAttribute('aria-label', 'Go to slide ' + (index + 1));
+            button.textContent = String(index + 1);
+            nav.appendChild(button);
+          });
+
+          const next = document.createElement('button');
+          next.type = 'button';
+          next.className = 'nav-arrow';
+          next.dataset.direction = '1';
+          next.setAttribute('aria-label', 'Next slide');
+          next.textContent = '›';
+          nav.appendChild(next);
+        });
+      }
+
+      function updateNavigation() {
+        document.querySelectorAll('.nav-dot').forEach(function (button) {
+          const selected = Number(button.dataset.go) === currentPage;
+          button.classList.toggle('is-current', selected);
+          button.setAttribute('aria-current', selected ? 'page' : 'false');
+        });
+
+        document.querySelectorAll('[data-direction="-1"]').forEach(function (button) {
+          button.disabled = currentPage === 1;
+        });
+        document.querySelectorAll('[data-direction="1"]').forEach(function (button) {
+          button.disabled = currentPage === slides.length;
+        });
+      }
+
+      function showPage(page, updateHash) {
+        currentPage = Math.min(Math.max(page, 1), slides.length);
+        slides.forEach(function (slide, index) {
+          slide.classList.toggle('is-active', index === currentPage - 1);
+        });
+
+        updateNavigation();
+        resetAnimation(currentPage);
+
+        if (updateHash) {
+          history.replaceState(null, '', '#' + slides[currentPage - 1].id);
+        }
+      }
+
+      function pageFromHash() {
+        const hash = window.location.hash.slice(1);
+        const index = slides.findIndex(function (slide) {
+          return slide.id === hash;
+        });
+        return index >= 0 ? index + 1 : 1;
+      }
+
+      function fitStage() {
+        const scale = Math.min(window.innerWidth / BASE_WIDTH, window.innerHeight / BASE_HEIGHT);
+        slides.forEach(function (slide) {
+          slide.style.transform = 'scale(' + scale + ')';
+          slide.style.transformOrigin = 'center center';
+        });
+      }
+
+      document.addEventListener('click', function (event) {
+        const target = event.target.closest('button');
+        if (!target) {
+          return;
+        }
+
+        if (target.dataset.go) {
+          showPage(Number(target.dataset.go), true);
+          return;
+        }
+
+        if (target.dataset.direction) {
+          showPage(currentPage + Number(target.dataset.direction), true);
+          return;
+        }
+
+        if (target.hasAttribute('data-pressure-trigger')) {
+          const animation = animations[2];
+          if (!animation.pressureLoss) {
+            if (!animation.paused) {
+              animation.elapsed = (performance.now() - animation.startedAt) % animation.duration;
+            } else {
+              animation.paused = false;
+              animation.startedAt = performance.now() - animation.elapsed;
+            }
+            animation.pressureLoss = true;
+            animation.tripProgress = (animation.elapsed / animation.duration) * 100;
+            animation.tripTemperature = parseFloat(query('[data-c1-temp]').textContent);
+            animation.render(animation.elapsed);
+            updatePauseButtons(2);
+          }
+          return;
+        }
+
+        const casePage = Number(target.dataset.case);
+        const animation = animations[casePage];
+        if (!animation) {
+          return;
+        }
+
+        if (target.dataset.control === 'replay') {
+          resetAnimation(casePage);
+        } else if (target.dataset.control === 'pause') {
+          if (animation.paused) {
+            animation.paused = false;
+            animation.startedAt = performance.now() - animation.elapsed;
+          } else {
+            animation.elapsed = (performance.now() - animation.startedAt) % animation.duration;
+            animation.paused = true;
+          }
+          updatePauseButtons(casePage);
+        }
+      });
+
+      window.addEventListener('keydown', function (event) {
+        if (event.target.tagName === 'BUTTON') {
+          return;
+        }
+
+        if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ') {
+          event.preventDefault();
+          showPage(currentPage + 1, true);
+        } else if (event.key === 'ArrowLeft' || event.key === 'PageUp') {
+          event.preventDefault();
+          showPage(currentPage - 1, true);
+        } else if (event.key === 'Home') {
+          showPage(1, true);
+        } else if (event.key === 'End') {
+          showPage(slides.length, true);
+        }
+      });
+
+      window.addEventListener('hashchange', function () {
+        showPage(pageFromHash(), false);
+      });
+      window.addEventListener('resize', fitStage);
+
+      function tick(now) {
+        const animation = animations[currentPage];
+        if (animation && !animation.paused) {
+          animation.elapsed = (now - animation.startedAt) % animation.duration;
+          animation.render(animation.elapsed);
+        }
+        window.requestAnimationFrame(tick);
+      }
+
+      buildNavigation();
+      enableTimelineSeeking();
+      fitStage();
+      showPage(pageFromHash(), false);
+      window.requestAnimationFrame(tick);
+    })();
+  </script>
+</body>
+</html>
