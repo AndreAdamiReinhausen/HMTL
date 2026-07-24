@@ -472,6 +472,25 @@
       margin-bottom: 1px;
     }
 
+    .input-readout--dual {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      padding: 9px 0 10px;
+    }
+
+    .temperature-readout {
+      min-width: 0;
+      padding: 0 14px;
+    }
+
+    .temperature-readout + .temperature-readout {
+      border-left: 1px solid #D5DEE6;
+    }
+
+    .input-readout--dual .readout-value {
+      font-size: 24px;
+    }
+
     .readout-label {
       display: block;
       margin-bottom: 3px;
@@ -694,9 +713,43 @@
     }
 
     .chart-threshold {
-      stroke: var(--c-heating);
-      stroke-width: 1.3;
-      stroke-dasharray: 5 4;
+      fill: none;
+      stroke-width: 1;
+      stroke-dasharray: 5 5;
+      opacity: .58;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .chart-threshold--medium { stroke: var(--c-blau); }
+    .chart-threshold--ipu { stroke: var(--c-running); }
+
+    .chart-threshold-label {
+      font: 650 8px/1 var(--font);
+      paint-order: stroke;
+      stroke: var(--c-weiss);
+      stroke-width: 3px;
+      stroke-linejoin: round;
+      text-anchor: end;
+    }
+
+    .chart-threshold-label--medium { fill: var(--c-blau); }
+    .chart-threshold-label--ipu { fill: var(--c-running); }
+
+    .chart-axis-label,
+    .chart-axis-unit {
+      fill: #6B7782;
+      paint-order: stroke;
+      stroke: var(--c-weiss);
+      stroke-width: 3px;
+      stroke-linejoin: round;
+    }
+
+    .chart-axis-label {
+      font: 600 8px/1 var(--font);
+    }
+
+    .chart-axis-unit {
+      font: 700 8px/1 var(--font);
     }
 
     .chart-curve {
@@ -706,6 +759,17 @@
       stroke-linecap: round;
       stroke-linejoin: round;
     }
+
+    .chart-curve--ipu {
+      stroke: var(--c-running);
+    }
+
+    .chart-legend {
+      font: 700 10px/1 var(--font);
+    }
+
+    .chart-legend--medium { fill: var(--c-blau); }
+    .chart-legend--ipu { fill: var(--c-running); }
 
     .chart-text {
       fill: var(--c-grau-dunkel);
@@ -771,26 +835,26 @@
     }
 
     .timeline-plot--combined {
-      height: 326px;
+      height: 380px;
       margin: 0 2px;
       cursor: ew-resize;
       user-select: none;
     }
 
     .timeline-plot--combined .temp-chart {
-      height: 90px;
-      padding-top: 16px;
+      height: 180px;
+      padding-top: 22px;
     }
 
     .timeline-plot--combined .temp-chart-label {
       top: 0;
-      left: 0;
+      left: 8px;
       width: auto;
       font-size: 10px;
     }
 
     .timeline-plot--combined .temp-chart svg {
-      height: 74px;
+      height: 158px;
     }
 
     .timeline-plot--combined .lane-row {
@@ -800,7 +864,7 @@
 
     .timeline-plot--combined .lane-label {
       top: 1px;
-      left: 0;
+      left: 8px;
       width: auto;
       font-size: 10px;
     }
@@ -853,28 +917,249 @@
       outline-offset: 2px;
     }
 
-    .case-controls {
-      position: absolute;
-      right: 16px;
-      bottom: 14px;
-      left: 16px;
+    .interface-layout {
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) 102px;
+      gap: 12px;
+    }
+
+    .reference-grid {
+      display: grid;
+      min-height: 0;
+      grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
+      gap: 12px;
+    }
+
+    .reference-panel {
+      min-width: 0;
+      padding: 13px 15px 10px;
+      border: 1px solid #C8D6E3;
+      border-radius: var(--radius);
+      background: #F8FAFC;
+    }
+
+    .reference-panel-header {
       display: flex;
-      align-items: center;
+      min-height: 38px;
+      align-items: flex-start;
       justify-content: space-between;
-      padding-top: 9px;
-      border-top: 1px solid #D5DEE6;
+      gap: 12px;
+      margin-bottom: 7px;
     }
 
-    .control-buttons {
-      display: flex;
-      gap: 7px;
-      margin-left: auto;
+    .reference-kicker {
+      display: block;
+      color: var(--c-blau);
+      font-size: 9px;
+      font-weight: 750;
+      letter-spacing: .08em;
+      line-height: 1;
+      text-transform: uppercase;
     }
 
-    .case-controls .btn {
-      min-width: 72px;
-      padding: 7px 12px;
-      font-size: 12px;
+    .reference-title {
+      display: block;
+      margin-top: 4px;
+      color: var(--c-dunkelblau);
+      font-size: 20px;
+      font-weight: 650;
+      line-height: 1;
+    }
+
+    .reference-count {
+      padding: 4px 8px;
+      border: 1px solid #B9CBDB;
+      border-radius: 999px;
+      background: var(--c-weiss);
+      color: var(--c-blau);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      line-height: 1;
+      white-space: nowrap;
+      text-transform: uppercase;
+    }
+
+    .reference-table {
+      table-layout: fixed;
+      border: 1px solid #D3DEE8;
+      background: var(--c-weiss);
+      font-size: 11px;
+      line-height: 1.12;
+    }
+
+    .reference-table th,
+    .reference-table td {
+      padding: 7px;
+      border-bottom: 1px solid #D9E2EA;
+      vertical-align: middle;
+    }
+
+    .reference-table th {
+      background: #EAF2F9;
+      color: var(--c-dunkelblau);
+      font-size: 9px;
+      font-weight: 750;
+      letter-spacing: .06em;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .reference-table tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .reference-table code {
+      color: var(--c-dunkelblau);
+      font: 600 10px/1.12 "Cascadia Mono", Consolas, monospace;
+      overflow-wrap: anywhere;
+    }
+
+    .event-table th:nth-child(1) { width: 13%; }
+    .event-table th:nth-child(2) { width: 51%; }
+    .event-table th:nth-child(3) { width: 17%; }
+    .event-table th:nth-child(4) { width: 19%; }
+
+    .config-table th:nth-child(1) { width: 58%; }
+    .config-table th:nth-child(2) { width: 25%; }
+    .config-table th:nth-child(3) { width: 17%; }
+
+    .event-code {
+      color: var(--c-grau-dunkel);
+      font: 650 10px/1 "Cascadia Mono", Consolas, monospace;
+      white-space: nowrap;
+    }
+
+    .ref-tag {
+      display: inline-block;
+      padding: 3px 5px;
+      border-radius: 999px;
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: .04em;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .ref-tag--warning {
+      background: #F4E7B8;
+      color: #725A00;
+    }
+
+    .ref-tag--shutdown {
+      background: #F2D9D9;
+      color: var(--c-fault);
+    }
+
+    .ref-tag--info {
+      background: #DCEAF7;
+      color: var(--c-dunkelblau);
+    }
+
+    .ack-code {
+      color: var(--c-grau-dunkel);
+      font: 650 9px/1 "Cascadia Mono", Consolas, monospace;
+      white-space: nowrap;
+    }
+
+    .reference-foot {
+      margin-top: 7px;
+      color: var(--c-grau-dunkel);
+      font-size: 10px;
+      line-height: 1.2;
+    }
+
+    .mode-map {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 5px;
+      margin-top: 5px;
+    }
+
+    .mode-map-label {
+      display: block;
+      margin-top: 10px;
+      color: var(--c-blau);
+      font-size: 9px;
+      font-weight: 750;
+      letter-spacing: .06em;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .mode-map span {
+      min-width: 0;
+      padding: 5px 6px;
+      border-left: 3px solid var(--c-blau);
+      border-radius: 3px;
+      background: var(--c-weiss);
+      color: var(--c-dunkelblau);
+      font: 650 9px/1.1 "Cascadia Mono", Consolas, monospace;
+      overflow-wrap: anywhere;
+    }
+
+    .mode-map b {
+      margin-right: 4px;
+      color: var(--c-blau);
+      font-family: var(--font);
+      font-size: 10px;
+    }
+
+    .config-band {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      gap: 18px;
+      align-items: center;
+      padding: 11px 15px;
+      border-radius: var(--radius);
+      background: var(--c-dunkelblau);
+      color: var(--c-weiss);
+    }
+
+    .config-band-kicker {
+      display: block;
+      margin-bottom: 4px;
+      color: #A9D3F4;
+      font-size: 9px;
+      font-weight: 750;
+      letter-spacing: .08em;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .config-cluster strong {
+      display: block;
+      font-size: 16px;
+      font-weight: 650;
+      line-height: 1.05;
+    }
+
+    .dio-action-list {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .dio-action {
+      min-width: 0;
+      padding: 8px;
+      border: 1px solid rgba(255, 255, 255, .24);
+      border-radius: 4px;
+      background: rgba(255, 255, 255, .08);
+    }
+
+    .dio-action b {
+      display: block;
+      margin-bottom: 3px;
+      color: #A9D3F4;
+      font-size: 9px;
+      line-height: 1;
+    }
+
+    .dio-action code {
+      color: var(--c-weiss);
+      font: 650 9px/1.05 "Cascadia Mono", Consolas, monospace;
+      overflow-wrap: anywhere;
     }
 
     @keyframes signalFlow {
@@ -1077,7 +1362,7 @@
         </svg>
 
         <span class="wire-label wire-label--temp">Temperature</span>
-        <span class="wire-label wire-label--ipu">State</span>
+        <span class="wire-label wire-label--ipu">Temperature</span>
         <span class="wire-label wire-label--do-head">Digital Output</span>
         <span class="wire-label wire-label--do-value">Pump &amp; Heater</span>
         <span class="wire-label wire-label--di-head">Digital Input</span>
@@ -1133,31 +1418,29 @@
     </footer>
   </main>
 
-  <main class="stage slide" id="case-1" data-page="2">
+  <main class="stage slide" id="functionality" data-page="2">
     <div class="stage-pad">
       <header class="header-rule">
-        <h1>Temperature and IPU cooling demand</h1>
-        <div class="subline">Heater and IPU demand with pump timing and pressure-loss override</div>
+        <h1>Medium and IPU temperature control</h1>
+        <div class="subline">Heater timing and 40/35°C pump hysteresis with pressure-loss override</div>
       </header>
 
-      <section class="slide-content case-layout" aria-label="Temperature and IPU cooling control animation">
+      <section class="slide-content case-layout" aria-label="Medium and IPU temperature control animation">
         <aside class="panel live-panel live-panel--combined">
           <div class="panel-heading">Live state</div>
 
-          <div class="input-readout input-readout--compact">
-            <span class="readout-label">Temperatur</span>
-            <span class="readout-value" data-c1-temp>22.6 °C</span>
+          <div class="input-readout input-readout--dual">
+            <div class="temperature-readout">
+              <span class="readout-label">Medium</span>
+              <span class="readout-value" data-c1-temp>22.6 °C</span>
+            </div>
+            <div class="temperature-readout">
+              <span class="readout-label">IPU</span>
+              <span class="readout-value" data-c1-ipu-temp>33.0 °C</span>
+            </div>
           </div>
 
           <div class="device-list">
-            <div class="device-state" data-c1-ipu>
-              <svg class="device-icon" viewBox="0 0 120 82" aria-hidden="true">
-                <use href="#icon-ipu"></use>
-              </svg>
-              <span class="device-state-name">IPU</span>
-              <span class="status-pill" data-c1-ipu-status>Off</span>
-            </div>
-
             <div class="device-state" data-c1-pump>
               <svg class="device-icon" viewBox="0 0 120 82" aria-hidden="true">
                 <use href="#icon-pump"></use>
@@ -1197,33 +1480,56 @@
               <span class="phase-kicker">Current phase</span>
               <span class="phase-title" data-c1-phase>Monitoring</span>
             </div>
-            <span class="phase-note" data-c1-note>Temperature remains above the heater threshold.</span>
+            <span class="phase-note" data-c1-note>Medium temperature falls toward the heater threshold.</span>
           </div>
 
           <div class="timeline-plot timeline-plot--combined" data-c1-plot
                title="Click or drag to set the timeline position">
             <div class="temp-chart">
               <span class="temp-chart-label">Temperature</span>
-              <svg viewBox="0 0 740 108" preserveAspectRatio="none" aria-hidden="true">
-                <line class="chart-grid" x1="0" y1="15" x2="740" y2="15"/>
-                <line class="chart-threshold" x1="0" y1="39" x2="740" y2="39"/>
-                <line class="chart-threshold" x1="0" y1="84" x2="740" y2="84"/>
-                <path class="chart-curve"
-                      d="M0 28
-                         C18 34 37 66 53 87
-                         C82 98 126 96 159 94
-                         C202 88 236 57 264 36
-                         C302 21 336 22 370 24
-                         C485 24 620 26 740 28"/>
+              <svg viewBox="0 0 740 158" preserveAspectRatio="none" aria-hidden="true">
+                <line class="chart-grid" x1="0" y1="20" x2="740" y2="20"/>
+                <line class="chart-grid" x1="0" y1="42" x2="740" y2="42"/>
+                <line class="chart-grid" x1="0" y1="63" x2="740" y2="63"/>
+                <line class="chart-grid" x1="0" y1="85" x2="740" y2="85"/>
+                <line class="chart-grid" x1="0" y1="107" x2="740" y2="107"/>
+                <line class="chart-grid" x1="0" y1="128" x2="740" y2="128"/>
+                <line class="chart-grid" x1="0" y1="150" x2="740" y2="150"/>
+                <line class="chart-threshold chart-threshold--medium" x1="0" y1="128" x2="740" y2="128"/>
+                <line class="chart-threshold chart-threshold--medium" x1="0" y1="120" x2="740" y2="120"/>
+                <line class="chart-threshold chart-threshold--ipu" x1="0" y1="63" x2="740" y2="63"/>
+                <line class="chart-threshold chart-threshold--ipu" x1="0" y1="42" x2="740" y2="42"/>
+                <text class="chart-axis-unit" x="4" y="12">°C</text>
+                <text class="chart-axis-label" x="4" y="23">45</text>
+                <text class="chart-axis-label" x="4" y="45">40</text>
+                <text class="chart-axis-label" x="4" y="66">35</text>
+                <text class="chart-axis-label" x="4" y="88">30</text>
+                <text class="chart-axis-label" x="4" y="110">25</text>
+                <text class="chart-axis-label" x="4" y="131">20</text>
+                <text class="chart-axis-label" x="4" y="153">15</text>
+                <text class="chart-legend chart-legend--medium" x="40" y="12">Medium</text>
+                <text class="chart-legend chart-legend--ipu" x="104" y="12">IPU</text>
+                <path class="chart-curve chart-curve--medium"
+                      d="M0 117
+                         C18 118 37 125 53 129
+                         C82 132 126 132 159 131
+                         C202 129 236 122 264 119
+                         C302 117 336 117 370 118
+                         C400 118 445 118 476 118
+                         C515 117 545 111 581 104
+                         C612 98 637 96 661 96
+                         C690 96 715 96 740 96"/>
+                <path class="chart-curve chart-curve--ipu"
+                      d="M0 72
+                         C160 71 300 72 423 70
+                         C448 65 463 49 476 42
+                         C500 36 530 32 570 32
+                         C620 31 680 32 740 32"/>
+                <text class="chart-threshold-label chart-threshold-label--medium" x="734" y="137">20°C</text>
+                <text class="chart-threshold-label chart-threshold-label--medium" x="734" y="117">22°C</text>
+                <text class="chart-threshold-label chart-threshold-label--ipu" x="734" y="60">35°C</text>
+                <text class="chart-threshold-label chart-threshold-label--ipu" x="734" y="39">40°C</text>
               </svg>
-            </div>
-
-            <div class="lane-row">
-              <span class="lane-label">IPU active</span>
-              <div class="lane-track">
-                <span class="lane-segment lane-segment--request" data-c1-state-segment
-                      data-start="57.14" data-end="71.43" style="left:57.14%;width:14.29%;"></span>
-              </div>
             </div>
 
             <div class="lane-row">
@@ -1232,7 +1538,7 @@
                 <span class="lane-segment lane-segment--running" data-c1-state-segment
                       data-start="7.14" data-end="50" style="left:7.14%;width:42.86%;"></span>
                 <span class="lane-segment lane-segment--running" data-c1-state-segment
-                      data-start="57.14" data-end="85.71" style="left:57.14%;width:28.57%;"></span>
+                      data-start="64.29" data-end="100" style="left:64.29%;width:35.71%;"></span>
               </div>
             </div>
 
@@ -1259,8 +1565,6 @@
                       data-start="7.14" data-end="21.43" style="left:7.14%;width:14.29%;opacity:.48;"></span>
                 <span class="lane-segment lane-segment--request" data-c1-state-segment
                       data-start="35.71" data-end="50" style="left:35.71%;width:14.29%;opacity:.48;"></span>
-                <span class="lane-segment lane-segment--request" data-c1-state-segment
-                      data-start="71.43" data-end="85.71" style="left:71.43%;width:14.28%;opacity:.48;"></span>
               </div>
             </div>
 
@@ -1276,21 +1580,182 @@
               <span style="left:7.14%;">&lt;20°C</span>
               <span style="left:21.43%;">pre-run done</span>
               <span style="left:50%;">over-run done</span>
-              <span style="left:85.71%;">over-run done</span>
+              <span style="left:64.29%;">IPU &gt;40°C</span>
             </div>
 
             <span class="playhead" role="slider" tabindex="0"
                   aria-label="Timeline position" aria-valuemin="0"
                   aria-valuemax="100" aria-valuenow="0"></span>
           </div>
+        </article>
+      </section>
+    </div>
 
-          <div class="case-controls">
-            <div class="control-buttons">
-              <button class="btn btn--ghost" type="button" data-control="pause" data-case="2">Pause</button>
-              <button class="btn" type="button" data-control="replay" data-case="2">Replay</button>
+    <footer class="footer">
+      <nav class="deck-nav" aria-label="Presentation navigation"></nav>
+    </footer>
+  </main>
+
+  <main class="stage slide" id="events-configs" data-page="3">
+    <div class="stage-pad">
+      <header class="header-rule">
+        <h1>Events and configuration</h1>
+        <div class="subline">Generated MIO events, ConfigLiquidCooled parameters and DIO actions</div>
+      </header>
+
+      <section class="slide-content interface-layout" aria-label="LCU events and configuration reference">
+        <div class="reference-grid">
+          <article class="reference-panel">
+            <div class="reference-panel-header">
+              <div>
+                <span class="reference-kicker">EventConfig · MIO</span>
+                <strong class="reference-title">Events</strong>
+              </div>
+              <span class="reference-count">7 events</span>
+            </div>
+
+            <table class="reference-table event-table" aria-label="MIO events">
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Enum</th>
+                  <th>Level</th>
+                  <th>Ack</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="event-code">0x7100</span></td>
+                  <td><code>EXTERNAL_<wbr>TEMPERATURE_<wbr>HIGH_<wbr>WARNING</code></td>
+                  <td><span class="ref-tag ref-tag--warning">WARNING</span></td>
+                  <td><span class="ack-code">AUTO_ACK</span></td>
+                </tr>
+                <tr>
+                  <td><span class="event-code">0x7101</span></td>
+                  <td><code>EXTERNAL_<wbr>TEMPERATURE_<wbr>HIGH_<wbr>ERROR</code></td>
+                  <td><span class="ref-tag ref-tag--shutdown">SHUTDOWN</span></td>
+                  <td><span class="ack-code">MANUAL_ACK</span></td>
+                </tr>
+                <tr>
+                  <td><span class="event-code">0x7102</span></td>
+                  <td><code>EXTERNAL_<wbr>TEMPERATURE_<wbr>UPPER_<wbr>OOB</code></td>
+                  <td><span class="ref-tag ref-tag--shutdown">SHUTDOWN</span></td>
+                  <td><span class="ack-code">MANUAL_ACK</span></td>
+                </tr>
+                <tr>
+                  <td><span class="event-code">0x7103</span></td>
+                  <td><code>EXTERNAL_<wbr>TEMPERATURE_<wbr>LOWER_<wbr>OOB</code></td>
+                  <td><span class="ref-tag ref-tag--shutdown">SHUTDOWN</span></td>
+                  <td><span class="ack-code">MANUAL_ACK</span></td>
+                </tr>
+                <tr>
+                  <td><span class="event-code">0x7104</span></td>
+                  <td><code>LCU_<wbr>PRESSURE_<wbr>LOSS</code></td>
+                  <td><span class="ref-tag ref-tag--shutdown">SHUTDOWN</span></td>
+                  <td><span class="ack-code">MANUAL_ACK</span></td>
+                </tr>
+                <tr>
+                  <td><span class="event-code">0x7105</span></td>
+                  <td><code>LCU_<wbr>HEATER_<wbr>ACTIVE</code></td>
+                  <td><span class="ref-tag ref-tag--info">INFO</span></td>
+                  <td><span class="ack-code">AUTO_ACK</span></td>
+                </tr>
+                <tr>
+                  <td><span class="event-code">0x7106</span></td>
+                  <td><code>LCU_<wbr>PUMP_<wbr>PRERUN</code></td>
+                  <td><span class="ref-tag ref-tag--info">INFO</span></td>
+                  <td><span class="ack-code">AUTO_ACK</span></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <p class="reference-foot">External-temperature detectors are instantiated per MIO sensor; the three LCU detectors are instantiated once.</p>
+          </article>
+
+          <article class="reference-panel">
+            <div class="reference-panel-header">
+              <div>
+                <span class="reference-kicker">eali · single instance</span>
+                <strong class="reference-title">ConfigLiquidCooled</strong>
+              </div>
+              <span class="reference-count">8 parameters</span>
+            </div>
+
+            <table class="reference-table config-table" aria-label="ConfigLiquidCooled parameters">
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Range</th>
+                  <th>Default</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>mode</code></td>
+                  <td>0–2</td>
+                  <td>0</td>
+                </tr>
+                <tr>
+                  <td><code>temperatureWarningLevel</code></td>
+                  <td>0–100 °C</td>
+                  <td>55</td>
+                </tr>
+                <tr>
+                  <td><code>temperatureErrorLevel</code></td>
+                  <td>0–100 °C</td>
+                  <td>60</td>
+                </tr>
+                <tr>
+                  <td><code>activateHeaterTemperature</code></td>
+                  <td>0–100 °C</td>
+                  <td>20</td>
+                </tr>
+                <tr>
+                  <td><code>deactivateHeaterTemperature</code></td>
+                  <td>0–100 °C</td>
+                  <td>25</td>
+                </tr>
+                <tr>
+                  <td><code>pumpPrerun</code></td>
+                  <td>0–600 s</td>
+                  <td>120</td>
+                </tr>
+                <tr>
+                  <td><code>pumpOverrun</code></td>
+                  <td>0–600 s</td>
+                  <td>120</td>
+                </tr>
+                <tr>
+                  <td><code>takeTemperatureFromMIO</code></td>
+                  <td>0–3</td>
+                  <td>0</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <span class="mode-map-label">Liquid Cool Control Modes</span>
+            <div class="mode-map" aria-label="Liquid Cool Control Modes">
+              <span><b>0</b>NOT_CONFIGURED</span>
+              <span><b>1</b>LCU_WITHOUT_HEATER</span>
+              <span><b>2</b>LCU_WITH_HEATER</span>
+            </div>
+          </article>
+        </div>
+
+        <aside class="config-band" aria-label="Configuration integration details">
+          <div class="config-cluster">
+            <strong>ConfigLiquidCooled</strong>
+          </div>
+
+          <div>
+            <span class="config-band-kicker">DI/O Configuration</span>
+            <div class="dio-action-list">
+              <span class="dio-action"><b>DO · 9</b><code>ACTIVATE_HEATER</code></span>
+              <span class="dio-action"><b>DO · 10</b><code>ACTIVATE_PUMP</code></span>
+              <span class="dio-action"><b>DI · 12</b><code>LCU_PRESSURE_LOSS</code></span>
             </div>
           </div>
-        </article>
+        </aside>
       </section>
     </div>
 
@@ -1340,29 +1805,31 @@
         duration: 28000,
         pressureLoss: false,
         tripProgress: 100,
-        tripTemperature: 22.6,
+        tripMediumTemperature: 22.6,
+        tripIpuTemperature: 33,
         reset: function () {
           this.pressureLoss = false;
           this.tripProgress = 100;
-          this.tripTemperature = 22.6;
+          this.tripMediumTemperature = 22.6;
+          this.tripIpuTemperature = 33;
         },
         render: function (elapsed) {
-          let temperature;
+          let mediumTemperature;
+          let ipuTemperature;
           let phase;
           let note;
-          let ipu = false;
           let pump = false;
           let heater = false;
           let timer = '—';
           let timerLabel = 'Timer<br>inactive';
 
           if (elapsed < 2000) {
-            temperature = 22.6 - 2.8 * (elapsed / 2000);
+            mediumTemperature = 22.6 - 2.8 * (elapsed / 2000);
             phase = 'Monitoring';
-            note = 'Temperature remains above the heater threshold.';
+            note = 'Medium temperature falls toward the heater threshold.';
           } else if (elapsed < 6000) {
             const ratio = (elapsed - 2000) / 4000;
-            temperature = 19.8 - .4 * ratio;
+            mediumTemperature = 19.8 - .4 * ratio;
             phase = 'Pump pre-run';
             note = 'Heat is requested; the heater waits for the 2:00 min pump pre-run.';
             pump = true;
@@ -1370,66 +1837,71 @@
             timerLabel = 'Pump pre-run<br>remaining';
           } else if (elapsed < 10000) {
             const ratio = (elapsed - 6000) / 4000;
-            temperature = 19.4 + 2.8 * ratio;
+            mediumTemperature = 19.4 + 2.8 * ratio;
             phase = 'Heating';
-            note = 'Pump and heater are active while coolant temperature rises.';
+            note = 'Pump and heater are active while medium temperature rises.';
             pump = true;
             heater = true;
             timer = '00:00';
             timerLabel = 'pre-run<br>complete';
           } else if (elapsed < 14000) {
             const ratio = (elapsed - 10000) / 4000;
-            temperature = 22.2 + .3 * ratio;
+            mediumTemperature = 22.2 + .3 * ratio;
             phase = 'Pump overrun · Heater';
             note = 'The heater is off; the pump continues for the 2:00 min overrun.';
             pump = true;
             timer = formatTimer(120 * (1 - ratio));
             timerLabel = 'Pump overrun<br>remaining';
           } else if (elapsed < 16000) {
-            temperature = 22.5;
+            mediumTemperature = 22.5;
             phase = 'Standby';
             note = 'The heater overrun is complete. Pump and heater are off.';
-          } else if (elapsed < 20000) {
-            temperature = 22.5;
-            phase = 'IPU active';
-            note = 'The active IPU requests cooling and switches the pump on.';
-            ipu = true;
-            pump = true;
-          } else if (elapsed < 24000) {
-            const ratio = (elapsed - 20000) / 4000;
-            temperature = 22.5;
-            phase = 'Pump overrun · IPU';
-            note = 'The IPU is off; the pump continues for the 2:00 min overrun.';
-            pump = true;
-            timer = formatTimer(120 * (1 - ratio));
-            timerLabel = 'Pump overrun<br>remaining';
+          } else if (elapsed < 18000) {
+            mediumTemperature = 22.5;
+            phase = 'IPU warming';
+            note = 'The highest linked converter temperature approaches 40°C.';
           } else {
-            temperature = 22.5;
-            phase = 'Standby';
-            note = 'Overrun is complete. IPU, pump and heater are off.';
+            mediumTemperature = 22.5;
+            phase = 'IPU temperature control';
+            note = 'Pump activation limits the IPU temperature; the medium warms by about 5°C with a slight delay.';
+            pump = true;
+          }
+
+          if (elapsed >= 18000) {
+            const mediumRatio = Math.min((elapsed - 18000) / 7000, 1);
+            const mediumRise = mediumRatio * mediumRatio * (3 - 2 * mediumRatio);
+            mediumTemperature = 22.5 + 5 * mediumRise;
+          }
+
+          if (elapsed < 16000) {
+            ipuTemperature = 33 + .5 * (elapsed / 16000);
+          } else if (elapsed < 18000) {
+            ipuTemperature = 33.5 + 6.5 * ((elapsed - 16000) / 2000);
+          } else {
+            const ratio = Math.min((elapsed - 18000) / 5000, 1);
+            ipuTemperature = 40 + 2.3 * (1 - Math.pow(1 - ratio, 3));
           }
 
           if (this.pressureLoss) {
-            temperature = this.tripTemperature;
+            mediumTemperature = this.tripMediumTemperature;
+            ipuTemperature = this.tripIpuTemperature;
             phase = 'Immediate shutdown';
-            note = 'Pressure loss overrides all requests; IPU, pump and heater are off.';
-            ipu = false;
+            note = 'Pressure loss overrides all requests; pump and heater are off.';
             pump = false;
             heater = false;
             timer = '00:00';
             timerLabel = 'Safety shutdown<br>no delay';
           }
 
-          query('[data-c1-temp]').textContent = temperature.toFixed(1) + ' °C';
+          query('[data-c1-temp]').textContent = mediumTemperature.toFixed(1) + ' °C';
+          query('[data-c1-ipu-temp]').textContent = ipuTemperature.toFixed(1) + ' °C';
           query('[data-c1-phase]').textContent = phase;
           query('[data-c1-note]').textContent = note;
           query('[data-c1-timer]').textContent = timer;
           query('[data-c1-timer-label]').innerHTML = timerLabel;
-          setDevice(query('[data-c1-ipu]'), ipu ? 'active' : '');
           setDevice(query('[data-c1-pump]'), pump ? 'active' : '');
           setDevice(query('[data-c1-heater]'), heater ? 'heating' : '');
           setDevice(query('[data-c1-pressure-row]'), this.pressureLoss ? 'fault' : '');
-          setStatus(query('[data-c1-ipu-status]'), ipu ? 'On' : 'Off', ipu ? 'on' : '');
           setStatus(query('[data-c1-pump-status]'), pump ? 'On' : 'Off', pump ? 'on' : '');
           setStatus(query('[data-c1-heater-status]'), heater ? 'On' : 'Off', heater ? 'heat' : '');
           setStatus(
@@ -1460,14 +1932,6 @@
         2: Object.assign(caseOne, { elapsed: 0, startedAt: performance.now(), paused: false })
       };
 
-      function updatePauseButtons(page) {
-        document.querySelectorAll('[data-control="pause"]').forEach(function (button) {
-          const casePage = Number(button.dataset.case);
-          button.textContent = animations[casePage].paused ? 'Resume' : 'Pause';
-          button.setAttribute('aria-pressed', animations[casePage].paused ? 'true' : 'false');
-        });
-      }
-
       function resetAnimation(page) {
         const animation = animations[page];
         if (!animation) {
@@ -1481,17 +1945,15 @@
         animation.startedAt = performance.now();
         animation.paused = reducedMotion;
         animation.render(0);
-        updatePauseButtons(page);
       }
 
-      function seekAnimation(progress) {
+      function seekAnimation(progress, pauseAfterSeek) {
         const animation = animations[2];
         const clampedProgress = Math.min(Math.max(progress, 0), 1);
         animation.elapsed = clampedProgress * animation.duration;
         animation.startedAt = performance.now() - animation.elapsed;
-        animation.paused = true;
+        animation.paused = Boolean(pauseAfterSeek) || reducedMotion;
         animation.render(animation.elapsed);
-        updatePauseButtons(2);
       }
 
       function enableTimelineSeeking() {
@@ -1501,7 +1963,7 @@
 
         function seekFromPointer(event) {
           const bounds = plot.getBoundingClientRect();
-          seekAnimation((event.clientX - bounds.left) / bounds.width);
+          seekAnimation((event.clientX - bounds.left) / bounds.width, true);
         }
 
         plot.addEventListener('pointerdown', function (event) {
@@ -1528,6 +1990,11 @@
           if (plot.hasPointerCapture(event.pointerId)) {
             plot.releasePointerCapture(event.pointerId);
           }
+          if (!reducedMotion) {
+            const animation = animations[2];
+            animation.paused = false;
+            animation.startedAt = performance.now() - animation.elapsed;
+          }
         }
 
         plot.addEventListener('pointerup', stopDragging);
@@ -1551,7 +2018,7 @@
 
           event.preventDefault();
           event.stopPropagation();
-          seekAnimation(progress);
+          seekAnimation(progress, false);
         });
       }
 
@@ -1657,30 +2124,11 @@
             }
             animation.pressureLoss = true;
             animation.tripProgress = (animation.elapsed / animation.duration) * 100;
-            animation.tripTemperature = parseFloat(query('[data-c1-temp]').textContent);
+            animation.tripMediumTemperature = parseFloat(query('[data-c1-temp]').textContent);
+            animation.tripIpuTemperature = parseFloat(query('[data-c1-ipu-temp]').textContent);
             animation.render(animation.elapsed);
-            updatePauseButtons(2);
           }
           return;
-        }
-
-        const casePage = Number(target.dataset.case);
-        const animation = animations[casePage];
-        if (!animation) {
-          return;
-        }
-
-        if (target.dataset.control === 'replay') {
-          resetAnimation(casePage);
-        } else if (target.dataset.control === 'pause') {
-          if (animation.paused) {
-            animation.paused = false;
-            animation.startedAt = performance.now() - animation.elapsed;
-          } else {
-            animation.elapsed = (performance.now() - animation.startedAt) % animation.duration;
-            animation.paused = true;
-          }
-          updatePauseButtons(casePage);
         }
       });
 
